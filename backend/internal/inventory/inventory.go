@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/uptaris/uptaris/backend/internal/auth"
+	"github.com/uptaris/uptaris/backend/internal/database"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -46,7 +47,7 @@ func listRows[T any](query *gorm.DB, page Page, order string) ([]T, int, error) 
 // update reloads and locks the row before applying and validating a patch.
 // Callers supply a model previously loaded through the scoped service methods.
 func update[T any](ctx context.Context, service *Service, resource *T, apply func() bool) error {
-	return service.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	return database.Transaction(service.db.WithContext(ctx), func(tx *gorm.DB) error {
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(resource).Error; err != nil {
 			return err
 		}

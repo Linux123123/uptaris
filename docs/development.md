@@ -6,7 +6,7 @@ Run commands from repository root.
 
 - Bun 1.3.11
 - Go 1.26+
-- Running PostgreSQL database
+- Running PostgreSQL or CockroachDB database
 
 ## Start application
 
@@ -16,7 +16,7 @@ Run commands from repository root.
    cp .env.example .env
    ```
 
-2. Create PostgreSQL database `uptaris`, or update `DATABASE_URL` in `.env` with your database connection.
+2. Create database `uptaris`, or update `DATABASE_URL` in `.env` with your database connection. Use `cockroachdb://` for CockroachDB so migrations select its driver; the API accepts the same URL and retries CockroachDB transactions. Keep the cluster's TLS parameters, such as `sslmode=verify-full` and `sslrootcert`, in the URL.
 
 3. Start API in first terminal:
 

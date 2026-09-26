@@ -3,6 +3,7 @@ package database
 import (
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -11,6 +12,12 @@ import (
 )
 
 func Open(dsn string) (*gorm.DB, error) {
+	connection, cockroach := strings.CutPrefix(dsn, "cockroachdb://")
+	if cockroach {
+		// CockroachDB speaks the PostgreSQL wire protocol, but pgx only parses PostgreSQL URL schemes.
+		dsn = "postgresql://" + connection
+	}
+
 	databaseLogger := logger.New(log.New(os.Stderr, "", log.LstdFlags), logger.Config{
 		LogLevel:                  logger.Silent,
 		ParameterizedQueries:      true,
@@ -19,6 +26,9 @@ func Open(dsn string) (*gorm.DB, error) {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: databaseLogger})
 	if err != nil {
 		return nil, err
+	}
+	if cockroach {
+		db = db.Set("uptaris:cockroachdb", true)
 	}
 
 	sqlDB, err := db.DB()

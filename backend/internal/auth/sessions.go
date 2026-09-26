@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/uptaris/uptaris/backend/internal/database"
 	"github.com/uptaris/uptaris/backend/internal/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -28,10 +29,11 @@ func (s *Service) issue(ctx context.Context, user models.User) (*Session, error)
 		ExpiresAt:        time.Now().Add(s.cfg.RefreshTokenTTL),
 	}
 	var access string
-	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err = database.Transaction(s.db.WithContext(ctx), func(tx *gorm.DB) error {
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&user, user.ID).Error; err != nil {
 			return err
 		}
+		session.ID = 0
 		if err := tx.Create(&session).Error; err != nil {
 			return err
 		}
@@ -51,7 +53,7 @@ func (s *Service) Refresh(ctx context.Context, refresh string) (*Session, error)
 	var session models.AuthSession
 	var user models.User
 	var access string
-	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err = database.Transaction(s.db.WithContext(ctx), func(tx *gorm.DB) error {
 		if err := tx.Where("refresh_token_hash = ? AND revoked_at IS NULL AND expires_at > ?", hash, time.Now()).First(&session).Error; err != nil {
 			return err
 		}

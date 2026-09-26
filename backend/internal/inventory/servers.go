@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/uptaris/uptaris/backend/internal/auth"
+	"github.com/uptaris/uptaris/backend/internal/database"
 	"github.com/uptaris/uptaris/backend/internal/models"
 	"gorm.io/gorm"
 )
@@ -30,7 +31,7 @@ func (s *Service) CreateServer(ctx context.Context, value *models.Server) error 
 }
 
 func (s *Service) DeleteServer(ctx context.Context, id uint) error {
-	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	return database.Transaction(s.db.WithContext(ctx), func(tx *gorm.DB) error {
 		monitors := tx.Model(&models.Monitor{}).Select("id").Where("server_id = ?", id)
 		if err := tx.Where("monitor_id IN (?)", monitors).Delete(&models.Incident{}).Error; err != nil {
 			return err

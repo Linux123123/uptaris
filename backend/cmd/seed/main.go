@@ -20,7 +20,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = db.Transaction(func(db *gorm.DB) error {
+	err = database.Transaction(db, func(db *gorm.DB) error {
 		var userCount int64
 		if err := db.Model(&models.User{}).Count(&userCount).Error; err != nil {
 			return err

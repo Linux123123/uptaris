@@ -1,6 +1,6 @@
 # Build and deployment
 
-Target frontend: `https://uptaris.linux123123.com` on Cloudflare Pages. Target API: `https://uptaris-api.linux123123.com` on a SparkedHost VPS with nginx and PostgreSQL.
+Target frontend: `https://uptaris.linux123123.com` on Cloudflare Pages. Target API: `https://uptaris-api.linux123123.com` on a SparkedHost VPS with nginx and PostgreSQL or CockroachDB.
 
 ## Frontend: Cloudflare Pages
 
@@ -48,11 +48,11 @@ Each deployment builds API and migration binaries on the VPS, applies pending da
 
 ## VPS configuration
 
-Provision a dedicated `uptaris` operating-system account, PostgreSQL role, and database. Install the binaries and migrations together; run the migration binary from the directory containing `migrations` before starting the API. Back up the database before upgrading.
+Provision a dedicated `uptaris` operating-system account, database user, and database. Install the binaries and migrations together; run the migration binary from the directory containing `migrations` before starting the API. Back up the database before upgrading.
 
-Use [`.env.example`](../.env.example) as the configuration reference. Set `APP_ENV=production`, the production `DATABASE_URL`, and independent random signing/refresh secrets generated with `openssl rand -hex 32`. Keep secrets outside the release bundle and restrict access to the service account or service manager.
+Use [`.env.example`](../.env.example) as the configuration reference. Set `APP_ENV=production`, the production `DATABASE_URL`, and independent random signing/refresh secrets generated with `openssl rand -hex 32`. PostgreSQL URLs use `postgres://` or `postgresql://`; CockroachDB URLs use `cockroachdb://` so migrations select its driver. Keep the cluster's TLS parameters in the CockroachDB URL. Keep secrets outside the release bundle and restrict access to the service account or service manager.
 
-Set `API_HOST=127.0.0.1`, `API_PORT=8080`, `TRUSTED_PROXIES=127.0.0.1/32`, and `CORS_ORIGINS=https://uptaris.linux123123.com`. Use `COOKIE_SECURE=true` and `COOKIE_SAME_SITE=lax` for the two HTTPS subdomains. Keep PostgreSQL private; use authenticated TLS for remote database connections.
+Set `API_HOST=127.0.0.1`, `API_PORT=8080`, `TRUSTED_PROXIES=127.0.0.1/32`, and `CORS_ORIGINS=https://uptaris.linux123123.com`. Use `COOKIE_SECURE=true` and `COOKIE_SAME_SITE=lax` for the two HTTPS subdomains. Keep the database private; use authenticated TLS for remote database connections.
 
 Configure a service manager to run the API under the dedicated account. Configure nginx to terminate HTTPS for `uptaris-api.linux123123.com`, redirect HTTP to HTTPS, and proxy requests to `127.0.0.1:8080` while preserving paths and forwarding client IP/protocol headers. Add per-client authentication rate limits. Service and proxy configuration are managed outside this repository.
 

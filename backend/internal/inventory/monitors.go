@@ -3,6 +3,7 @@ package inventory
 import (
 	"context"
 
+	"github.com/uptaris/uptaris/backend/internal/database"
 	"github.com/uptaris/uptaris/backend/internal/models"
 	"gorm.io/gorm"
 )
@@ -32,7 +33,7 @@ func (s *Service) CreateMonitor(ctx context.Context, value *models.Monitor) erro
 }
 
 func (s *Service) DeleteMonitor(ctx context.Context, id uint) error {
-	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	return database.Transaction(s.db.WithContext(ctx), func(tx *gorm.DB) error {
 		if err := tx.Where("monitor_id = ?", id).Delete(&models.Incident{}).Error; err != nil {
 			return err
 		}

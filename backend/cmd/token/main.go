@@ -44,7 +44,7 @@ func run(email string, ttl time.Duration) error {
 	defer sqlDB.Close()
 
 	var token string
-	err = db.Transaction(func(tx *gorm.DB) error {
+	err = database.Transaction(db, func(tx *gorm.DB) error {
 		var user models.User
 		// Serialize issuance with user deletion and role changes, as login does.
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("email = ?", email).First(&user).Error; err != nil {

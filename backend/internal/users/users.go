@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/uptaris/uptaris/backend/internal/auth"
+	"github.com/uptaris/uptaris/backend/internal/database"
 	"github.com/uptaris/uptaris/backend/internal/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -39,7 +40,7 @@ func (s *Service) ChangeRole(ctx context.Context, actor auth.Identity, userID ui
 		return nil, ErrOwnRole
 	}
 	var user models.User
-	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err := database.Transaction(s.db.WithContext(ctx), func(tx *gorm.DB) error {
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&user, userID).Error; err != nil {
 			return err
 		}
@@ -56,7 +57,7 @@ func (s *Service) Delete(ctx context.Context, actor auth.Identity, userID uint) 
 	if userID == actor.ID {
 		return ErrOwnDelete
 	}
-	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err := database.Transaction(s.db.WithContext(ctx), func(tx *gorm.DB) error {
 		var user models.User
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&user, userID).Error; err != nil {
 			return err
