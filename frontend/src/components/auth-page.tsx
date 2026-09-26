@@ -49,8 +49,8 @@ export function AuthPage({
   });
 
   return (
-    <div className="flex items-center h-full pb-20 gap-20">
-      <div className="hidden max-w-xl lg:block">
+    <div className="mx-auto grid w-full max-w-5xl items-center gap-12 lg:min-h-full lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] xl:gap-20">
+      <div className="hidden min-w-0 lg:block">
         <h1 className="text-4xl font-semibold tracking-tight">
           Keep operations calm when systems are not.
         </h1>
@@ -58,7 +58,7 @@ export function AuthPage({
           One focused console for server health, checks, incidents, and access control.
         </p>
       </div>
-      <Card className="w-2xl shadow-2xl shadow-black/20 py-10 px-6">
+      <Card className="w-full min-w-0 max-w-xl justify-self-center px-3 py-6 shadow-2xl shadow-black/20 sm:px-6 sm:py-10 lg:max-w-none">
         <CardHeader>
           <CardTitle>{register ? "Create account" : "Welcome back"}</CardTitle>
           <CardDescription>
