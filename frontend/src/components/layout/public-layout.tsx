@@ -1,17 +1,21 @@
 import { BrandLink } from "@/components/brand-link";
 import { Link } from "@tanstack/react-router";
-import { Activity, LogIn, Menu, UserPlus } from "lucide-react";
+import { useSelector } from "@tanstack/react-store";
+import { Activity, LayoutDashboard, LogIn, Menu, UserPlus } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { authStore } from "@/lib/auth-store";
 
-const links = [
-  { to: "/", label: "System status", icon: Activity },
-  { to: "/login", label: "Sign in", icon: LogIn },
-  { to: "/register", label: "Create account", icon: UserPlus },
-] as const;
+const statusLink = { to: "/", label: "System status", icon: Activity } as const;
+const dashboardLink = { to: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard } as const;
+const loginLink = { to: "/login", label: "Sign in", icon: LogIn } as const;
+const registerLink = { to: "/register", label: "Create account", icon: UserPlus } as const;
 
 export function PublicLayout({ children }: { children: ReactNode }) {
+  const authenticated = useSelector(authStore, (state) => state.status === "authenticated");
+  const links = authenticated ? [statusLink, dashboardLink] : [statusLink, loginLink, registerLink];
+
   return (
     <div className="dark grid min-h-svh grid-rows-[auto_1fr_auto] bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
