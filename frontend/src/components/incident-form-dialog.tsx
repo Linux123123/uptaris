@@ -37,8 +37,8 @@ export function IncidentFormDialog({
   monitorId,
   incident,
 }: {
-  serverId: number;
-  monitorId: number;
+  serverId: string;
+  monitorId: string;
   incident?: Incident;
 }) {
   const formId = useId();

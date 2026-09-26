@@ -28,7 +28,7 @@ const schema = z.object({
   expectedHealth: requiredText("Expected health"),
 });
 
-export function MonitorFormDialog({ serverId, monitor }: { serverId: number; monitor?: Monitor }) {
+export function MonitorFormDialog({ serverId, monitor }: { serverId: string; monitor?: Monitor }) {
   const formId = useId();
   const [open, setOpen] = useState(false);
   const [serverError, setServerError] = useState("");

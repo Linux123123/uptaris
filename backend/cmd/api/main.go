@@ -1,8 +1,7 @@
 // @title Uptaris API
 // @version 0.1.0
 // @description REST API for Uptaris infrastructure monitoring.
-// @BasePath /api/v1
-// @schemes http https
+// @servers.url /api/v1
 // @securityDefinitions.bearerauth bearerauth
 //
 //go:generate sh -c "cd ../.. && go run github.com/swaggo/swag/v2/cmd/swag@v2.0.0-rc4 init --v3.1 --parseDependency -g cmd/api/main.go -o openapi"
@@ -25,7 +24,6 @@ import (
 	"github.com/uptaris/uptaris/backend/internal/config"
 	"github.com/uptaris/uptaris/backend/internal/database"
 	"github.com/uptaris/uptaris/backend/internal/handlers"
-	"github.com/uptaris/uptaris/backend/internal/inventory"
 	"github.com/uptaris/uptaris/backend/internal/observability"
 	"github.com/uptaris/uptaris/backend/internal/users"
 	_ "github.com/uptaris/uptaris/backend/openapi"
@@ -67,7 +65,7 @@ func run() int {
 		return 1
 	}
 	defer sqlDB.Close()
-	httpHandlers := handlers.New(auth.New(db, cfg), inventory.New(db), users.New(db), cfg, sqlDB.PingContext)
+	httpHandlers := handlers.New(db, auth.New(db, cfg), users.New(db), cfg, sqlDB.PingContext)
 	router := routers.Configure(cfg, httpHandlers, logger)
 	server := &http.Server{
 		Addr:              net.JoinHostPort(cfg.Host, cfg.Port),

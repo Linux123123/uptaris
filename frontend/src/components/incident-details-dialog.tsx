@@ -20,9 +20,9 @@ export function IncidentDetailsDialog({
   title,
   canEdit,
 }: {
-  serverId: number;
-  monitorId: number;
-  id: number;
+  serverId: string;
+  monitorId: string;
+  id: string;
   title: string;
   canEdit: boolean;
 }) {

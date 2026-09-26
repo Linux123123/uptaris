@@ -44,7 +44,7 @@ function UsersPage() {
   const query = useQuery(usersQuery(search));
   const currentUserId = authStore.state.user?.id;
   const remove = useMutation({
-    mutationFn: (id: number) => adminApi.removeUser(id),
+    mutationFn: (id: string) => adminApi.removeUser(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["users"] });
       toast.success("User deleted and sessions revoked");
@@ -52,7 +52,7 @@ function UsersPage() {
     onError: (error) => toast.error(error.message),
   });
   const updateRole = useMutation({
-    mutationFn: ({ id, role }: { id: number; role: Role }) => adminApi.updateRole(id, role),
+    mutationFn: ({ id, role }: { id: string; role: Role }) => adminApi.updateRole(id, role),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["users"] });
       toast.success("User role updated; active sessions revoked");

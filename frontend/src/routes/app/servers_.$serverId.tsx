@@ -24,7 +24,7 @@ import { monitorsApi, serversApi, type Monitor } from "@/lib/api";
 
 export const Route = createFileRoute("/app/servers_/$serverId")({
   params: {
-    parse: (params) => ({ serverId: z.coerce.number().int().positive().parse(params.serverId) }),
+    parse: (params) => ({ serverId: z.string().regex(/^\d+$/).parse(params.serverId) }),
   },
   validateSearch: z.object({
     page: z.coerce.number().int().positive().catch(1),
@@ -62,7 +62,7 @@ function ServerDetailPage() {
   });
   const removeMonitor = useMutation({
     onError: (error) => toast.error(error.message),
-    mutationFn: (monitorId: number) => monitorsApi.remove(serverId, monitorId),
+    mutationFn: (monitorId: string) => monitorsApi.remove(serverId, monitorId),
     onSuccess: async () => {
       await invalidateInventory(queryClient);
       await queryClient.invalidateQueries({ queryKey: ["monitors", serverId] });

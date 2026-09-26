@@ -5,25 +5,25 @@ import (
 
 	"github.com/uptaris/uptaris/backend/internal/auth"
 	"github.com/uptaris/uptaris/backend/internal/config"
-	"github.com/uptaris/uptaris/backend/internal/inventory"
 	"github.com/uptaris/uptaris/backend/internal/users"
+	"gorm.io/gorm"
 )
 
 type Handlers struct {
-	auth      *auth.Service
-	inventory *inventory.Service
-	users     *users.Service
-	cfg       config.Config
-	health    func(context.Context) error
+	db     *gorm.DB
+	auth   *auth.Service
+	users  *users.Service
+	cfg    config.Config
+	health func(context.Context) error
 }
 
-func New(authentication *auth.Service, resources *inventory.Service, accounts *users.Service, cfg config.Config, health func(context.Context) error) *Handlers {
+func New(db *gorm.DB, authentication *auth.Service, accounts *users.Service, cfg config.Config, health func(context.Context) error) *Handlers {
 	return &Handlers{
-		auth:      authentication,
-		inventory: resources,
-		users:     accounts,
-		cfg:       cfg,
-		health:    health,
+		db:     db,
+		auth:   authentication,
+		users:  accounts,
+		cfg:    cfg,
+		health: health,
 	}
 }
 

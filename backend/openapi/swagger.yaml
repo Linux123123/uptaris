@@ -1,100 +1,173 @@
 components:
   schemas:
-    github_com_uptaris_uptaris_backend_internal_inventory.IncidentRow:
-      properties:
-        createdAt:
-          type: string
-        description:
-          type: string
-        id:
-          type: integer
-        monitorId:
-          type: integer
-        monitorName:
-          type: string
-        resolvedAt:
-          type: string
-        serverId:
-          type: integer
-        severity:
-          type: string
-        startedAt:
-          type: string
-        status:
-          type: string
-        title:
-          type: string
-        updatedAt:
-          type: string
-      type: object
     github_com_uptaris_uptaris_backend_internal_models.Incident:
       properties:
         createdAt:
           type: string
         description:
+          maxLength: 10000
           type: string
         id:
-          type: integer
+          example: "0"
+          type: string
         monitorId:
-          type: integer
+          example: "0"
+          type: string
         resolvedAt:
           type: string
         severity:
+          enum:
+          - low
+          - medium
+          - high
+          - critical
           type: string
         startedAt:
           type: string
         status:
+          enum:
+          - open
+          - acknowledged
+          - resolved
           type: string
         title:
+          maxLength: 200
           type: string
         updatedAt:
           type: string
+      required:
+      - severity
+      - startedAt
+      - status
+      - title
+      type: object
+    github_com_uptaris_uptaris_backend_internal_models.IncidentRow:
+      properties:
+        createdAt:
+          type: string
+        description:
+          maxLength: 10000
+          type: string
+        id:
+          example: "0"
+          type: string
+        monitorId:
+          example: "0"
+          type: string
+        monitorName:
+          type: string
+        resolvedAt:
+          type: string
+        serverId:
+          example: "0"
+          type: string
+        severity:
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+          type: string
+        startedAt:
+          type: string
+        status:
+          enum:
+          - open
+          - acknowledged
+          - resolved
+          type: string
+        title:
+          maxLength: 200
+          type: string
+        updatedAt:
+          type: string
+      required:
+      - severity
+      - startedAt
+      - status
+      - title
       type: object
     github_com_uptaris_uptaris_backend_internal_models.Monitor:
       properties:
         createdAt:
           type: string
         expectedHealth:
+          maxLength: 200
           type: string
         id:
-          type: integer
+          example: "0"
+          type: string
         intervalSeconds:
+          maximum: 86400
+          minimum: 1
           type: integer
         lastCheckedAt:
           type: string
         name:
+          maxLength: 200
           type: string
         serverId:
-          type: integer
+          example: "0"
+          type: string
         status:
+          enum:
+          - up
+          - down
+          - paused
           type: string
         target:
+          maxLength: 2048
           type: string
         type:
+          enum:
+          - http
+          - tcp
+          - icmp
           type: string
         updatedAt:
           type: string
+      required:
+      - expectedHealth
+      - name
+      - status
+      - target
+      - type
       type: object
     github_com_uptaris_uptaris_backend_internal_models.Server:
       properties:
         address:
+          maxLength: 2048
           type: string
         createdAt:
           type: string
         description:
+          maxLength: 10000
           type: string
         id:
-          type: integer
+          example: "0"
+          type: string
         name:
+          maxLength: 200
           type: string
         operatingSystem:
+          maxLength: 200
           type: string
         ownerId:
-          type: integer
+          example: "0"
+          type: string
         status:
+          enum:
+          - up
+          - down
+          - paused
           type: string
         updatedAt:
           type: string
+      required:
+      - address
+      - name
+      - operatingSystem
+      - status
       type: object
     github_com_uptaris_uptaris_backend_internal_models.User:
       properties:
@@ -103,7 +176,8 @@ components:
         email:
           type: string
         id:
-          type: integer
+          example: "0"
+          type: string
         role:
           type: string
         updatedAt:
@@ -128,20 +202,32 @@ components:
       properties:
         description:
           example: Primary customer API
+          maxLength: 10000
           type: string
         resolvedAt:
           example: "2026-09-26T11:00:00Z"
           type: string
         severity:
+          enum:
+          - low
+          - medium
+          - high
+          - critical
           example: low
           type: string
         startedAt:
           example: "2026-09-26T10:00:00Z"
           type: string
         status:
+          enum:
+          - open
+          - acknowledged
+          - resolved
+          example: open
           type: string
         title:
           example: API maintenance
+          maxLength: 200
           type: string
       required:
       - severity
@@ -151,43 +237,70 @@ components:
       properties:
         description:
           example: Primary customer API
+          maxLength: 10000
           type: string
         resolvedAt:
           example: "2026-09-26T11:00:00Z"
           type: string
         severity:
+          enum:
+          - low
+          - medium
+          - high
+          - critical
           example: low
           type: string
         startedAt:
           example: "2026-09-26T10:00:00Z"
           type: string
         status:
+          enum:
+          - open
+          - acknowledged
+          - resolved
+          example: open
           type: string
         title:
           example: API maintenance
+          maxLength: 200
           type: string
       type: object
     github_com_uptaris_uptaris_backend_internal_request.MonitorInput:
       properties:
         expectedHealth:
           example: "200"
+          maxLength: 200
           type: string
         intervalSeconds:
           example: 60
+          maximum: 86400
+          minimum: 1
           type: integer
         name:
           example: Public API
+          maxLength: 200
           type: string
         status:
+          enum:
+          - up
+          - down
+          - paused
+          example: up
           type: string
         target:
           example: https://api.example.com/health
+          maxLength: 2048
           type: string
         type:
+          enum:
+          - http
+          - tcp
+          - icmp
           example: http
           type: string
       required:
       - expectedHealth
+      - intervalSeconds
       - name
       - target
       - type
@@ -196,19 +309,33 @@ components:
       properties:
         expectedHealth:
           example: "200"
+          maxLength: 200
           type: string
         intervalSeconds:
           example: 60
+          maximum: 86400
+          minimum: 1
           type: integer
         name:
           example: Public API
+          maxLength: 200
           type: string
         status:
+          enum:
+          - up
+          - down
+          - paused
+          example: up
           type: string
         target:
           example: https://api.example.com/health
+          maxLength: 2048
           type: string
         type:
+          enum:
+          - http
+          - tcp
+          - icmp
           example: http
           type: string
       type: object
@@ -216,17 +343,26 @@ components:
       properties:
         address:
           example: api.example.com
+          maxLength: 2048
           type: string
         description:
           example: Primary customer API
+          maxLength: 10000
           type: string
         name:
           example: Public API
+          maxLength: 200
           type: string
         operatingSystem:
           example: Ubuntu 24.04
+          maxLength: 200
           type: string
         status:
+          enum:
+          - up
+          - down
+          - paused
+          example: up
           type: string
       required:
       - address
@@ -237,22 +373,35 @@ components:
       properties:
         address:
           example: api.example.com
+          maxLength: 2048
           type: string
         description:
           example: Primary customer API
+          maxLength: 10000
           type: string
         name:
           example: Public API
+          maxLength: 200
           type: string
         operatingSystem:
           example: Ubuntu 24.04
+          maxLength: 200
           type: string
         status:
+          enum:
+          - up
+          - down
+          - paused
+          example: up
           type: string
       type: object
     github_com_uptaris_uptaris_backend_internal_request.UserRoleInput:
       properties:
         role:
+          enum:
+          - viewer
+          - operator
+          - admin
           example: viewer
           type: string
       required:
@@ -265,36 +414,13 @@ components:
         user:
           $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UserResponse'
       type: object
-    github_com_uptaris_uptaris_backend_internal_response.BadRequestError:
-      properties:
-        error:
-          properties:
-            code:
-              example: invalid_json
-              type: string
-            message:
-              example: valid JSON required
-              type: string
-          type: object
-      type: object
-    github_com_uptaris_uptaris_backend_internal_response.ConflictError:
-      properties:
-        error:
-          properties:
-            code:
-              example: email_exists
-              type: string
-            message:
-              example: email already registered
-              type: string
-          type: object
-      type: object
     github_com_uptaris_uptaris_backend_internal_response.CreateUserResponse:
       properties:
         email:
           type: string
         id:
-          type: integer
+          example: "0"
+          type: string
         role:
           type: string
       type: object
@@ -312,24 +438,15 @@ components:
         error:
           properties:
             code:
-              example: validation_failed
               type: string
             message:
-              example: valid server fields required
               type: string
+          required:
+          - code
+          - message
           type: object
-      type: object
-    github_com_uptaris_uptaris_backend_internal_response.ForbiddenError:
-      properties:
-        error:
-          properties:
-            code:
-              example: forbidden
-              type: string
-            message:
-              example: role not permitted
-              type: string
-          type: object
+      required:
+      - error
       type: object
     github_com_uptaris_uptaris_backend_internal_response.IncidentListResponse:
       properties:
@@ -347,7 +464,7 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_inventory.IncidentRow'
+            $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_models.IncidentRow'
           type: array
           uniqueItems: false
         links:
@@ -394,18 +511,6 @@ components:
         data:
           $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_models.Monitor'
       type: object
-    github_com_uptaris_uptaris_backend_internal_response.NotFoundError:
-      properties:
-        error:
-          properties:
-            code:
-              example: not_found
-              type: string
-            message:
-              example: server not found
-              type: string
-          type: object
-      type: object
     github_com_uptaris_uptaris_backend_internal_response.Pagination:
       properties:
         page:
@@ -451,18 +556,6 @@ components:
         servers:
           type: integer
       type: object
-    github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError:
-      properties:
-        error:
-          properties:
-            code:
-              example: authentication_required
-              type: string
-            message:
-              example: bearer token required
-              type: string
-          type: object
-      type: object
     github_com_uptaris_uptaris_backend_internal_response.UserListResponse:
       properties:
         data:
@@ -482,7 +575,8 @@ components:
         email:
           type: string
         id:
-          type: integer
+          example: "0"
+          type: string
         role:
           type: string
         updatedAt:
@@ -493,21 +587,10 @@ components:
         email:
           type: string
         id:
-          type: integer
+          example: "0"
+          type: string
         role:
           type: string
-      type: object
-    github_com_uptaris_uptaris_backend_internal_response.ValidationError:
-      properties:
-        error:
-          properties:
-            code:
-              example: validation_failed
-              type: string
-            message:
-              example: valid server fields required
-              type: string
-          type: object
       type: object
   securitySchemes:
     bearerauth:
@@ -531,12 +614,15 @@ paths:
         name: page
         schema:
           default: 1
+          minimum: 1
           type: integer
       - description: Results per page
         in: query
         name: pageSize
         schema:
           default: 20
+          maximum: 100
+          minimum: 1
           type: integer
       responses:
         "200":
@@ -549,26 +635,38 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Bad Request
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_query: invalid query parameter'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ForbiddenError'
-          description: Forbidden
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'forbidden: administrator role required'
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'body_too_large: request body exceeds 64 KiB'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: List users
@@ -582,6 +680,7 @@ paths:
         name: userId
         required: true
         schema:
+          minimum: 1
           type: integer
       responses:
         "204":
@@ -590,38 +689,56 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Bad Request
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_id: invalid resource ID'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ForbiddenError'
-          description: Forbidden
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'forbidden or origin_not_allowed: role or origin not permitted'
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.NotFoundError'
-          description: Not Found
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'not_found: resource not found'
         "409":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ConflictError'
-          description: Conflict
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'self_delete: cannot delete own account'
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'body_too_large: request body exceeds 64 KiB'
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'unsupported_media_type: non-JSON request body'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: Delete user and revoke sessions
@@ -657,56 +774,62 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Malformed user ID or JSON
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_id or invalid_json: invalid ID or JSON body'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ForbiddenError'
-          description: Forbidden
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'forbidden or origin_not_allowed: role or origin not permitted'
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.NotFoundError'
-          description: User not found
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'not_found: resource not found'
         "409":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ConflictError'
-          description: Administrator cannot change own role
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'self_role_change: cannot change own role'
         "413":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Body exceeds 64 KiB
+          description: 'body_too_large: request body exceeds 64 KiB'
         "415":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: JSON content type required
+          description: 'unsupported_media_type: non-JSON request body'
         "422":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ValidationError'
-          description: Role must be viewer, operator, or admin
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'validation_failed: invalid request field'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: Update user role
@@ -728,48 +851,70 @@ paths:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.AuthResponse'
           description: OK
+          headers:
+            Set-Cookie:
+              description: HttpOnly refresh cookie
+              schema:
+                type: string
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Bad Request
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_json: malformed JSON body'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_credentials: email or password invalid'
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'origin_not_allowed: request origin not allowed'
         "413":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Body exceeds 64 KiB
+          description: 'body_too_large: request body exceeds 64 KiB'
         "415":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: JSON content type required
+          description: 'unsupported_media_type: non-JSON request body'
         "422":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ValidationError'
-          description: Unprocessable Entity
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'validation_failed: invalid request field'
         "429":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Too many authentication attempts
+          description: 'rate_limited: too many authentication attempts'
+          headers:
+            Retry-After:
+              description: Seconds before retry
+              schema:
+                type: string
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       summary: Log in
       tags:
       - auth
@@ -780,18 +925,47 @@ paths:
       responses:
         "204":
           description: No Content
+          headers:
+            Set-Cookie:
+              description: Expired refresh cookie
+              schema:
+                type: string
         "401":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Unauthorized
+          description: authentication_required, invalid_token, revoked_token, or stale_token
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'origin_not_allowed: request origin not allowed'
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'body_too_large: request body exceeds 64 KiB'
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'unsupported_media_type: non-JSON request body'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: Log out
@@ -811,13 +985,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Unauthorized
+          description: authentication_required, invalid_token, revoked_token, or stale_token
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'body_too_large: request body exceeds 64 KiB'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: Get authenticated user
@@ -825,8 +1011,8 @@ paths:
       - auth
   /auth/refresh:
     post:
-      description: Rotates the HttpOnly refresh cookie atomically within the existing
-        session.
+      description: Requires uptaris_refresh HttpOnly cookie from login or previous
+        refresh. Rotates it atomically within the existing session.
       responses:
         "200":
           content:
@@ -834,18 +1020,48 @@ paths:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.AuthResponse'
           description: OK
+          headers:
+            Set-Cookie:
+              description: HttpOnly refresh cookie
+              schema:
+                type: string
         "401":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Unauthorized
+          description: 'refresh_required or invalid_refresh: refresh cookie missing
+            or invalid'
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'origin_not_allowed: request origin not allowed'
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'body_too_large: request body exceeds 64 KiB'
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'unsupported_media_type: non-JSON request body'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       summary: Refresh access token
       tags:
       - auth
@@ -865,48 +1081,70 @@ paths:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.CreateUserResponse'
           description: Created
+          headers:
+            Location:
+              description: Created resource URI
+              schema:
+                type: string
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Bad Request
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_json: malformed JSON body'
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'origin_not_allowed: request origin not allowed'
         "409":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ConflictError'
-          description: Conflict
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'email_exists: email already registered'
         "413":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Body exceeds 64 KiB
+          description: 'body_too_large: request body exceeds 64 KiB'
         "415":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: JSON content type required
+          description: 'unsupported_media_type: non-JSON request body'
         "422":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ValidationError'
-          description: Unprocessable Entity
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'validation_failed: invalid request field'
         "429":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Too many authentication attempts
+          description: 'rate_limited: too many authentication attempts'
+          headers:
+            Retry-After:
+              description: Seconds before retry
+              schema:
+                type: string
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       summary: Register account
       tags:
       - auth
@@ -924,13 +1162,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Unauthorized
+          description: authentication_required, invalid_token, revoked_token, or stale_token
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'body_too_large: request body exceeds 64 KiB'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service Unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: Get owner-scoped dashboard
@@ -944,6 +1194,7 @@ paths:
         name: page
         schema:
           default: 1
+          minimum: 1
           type: integer
       - description: Page size
         in: query
@@ -951,6 +1202,7 @@ paths:
         schema:
           default: 20
           maximum: 100
+          minimum: 1
           type: integer
       - description: Status
         in: query
@@ -982,20 +1234,32 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Bad Request
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_query: invalid query parameter'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'body_too_large: request body exceeds 64 KiB'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service Unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: List accessible incidents across servers
@@ -1017,6 +1281,7 @@ paths:
         schema:
           default: 20
           maximum: 100
+          minimum: 1
           type: integer
       - description: Status
         in: query
@@ -1038,20 +1303,32 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Malformed ID or query parameter
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_query: invalid query parameter'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Missing, invalid, expired, or revoked token
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'body_too_large: request body exceeds 64 KiB'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: List servers
@@ -1082,43 +1359,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Malformed JSON
+          description: 'invalid_json: malformed JSON body'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ForbiddenError'
-          description: Viewer role cannot create resources
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'forbidden or origin_not_allowed: role or origin not permitted'
         "413":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Body exceeds 64 KiB
+          description: 'body_too_large: request body exceeds 64 KiB'
         "415":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: JSON content type required
+          description: 'unsupported_media_type: non-JSON request body'
         "422":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ValidationError'
-          description: Unprocessable Entity
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'validation_failed: invalid request field'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: Create server
@@ -1141,32 +1424,50 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Bad Request
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_id: invalid resource ID'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ForbiddenError'
-          description: Forbidden
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'forbidden or origin_not_allowed: role or origin not permitted'
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.NotFoundError'
-          description: Not Found
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'not_found: resource not found'
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'body_too_large: request body exceeds 64 KiB'
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'unsupported_media_type: non-JSON request body'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: Delete server and descendants
@@ -1192,26 +1493,38 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Bad Request
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_id: invalid resource ID'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.NotFoundError'
-          description: Not Found
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'not_found: resource not found'
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'body_too_large: request body exceeds 64 KiB'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: Get server
@@ -1244,50 +1557,56 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Bad Request
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_id or invalid_json: invalid ID or JSON body'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ForbiddenError'
-          description: Forbidden
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'forbidden or origin_not_allowed: role or origin not permitted'
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.NotFoundError'
-          description: Not Found
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'not_found: resource not found'
         "413":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Body exceeds 64 KiB
+          description: 'body_too_large: request body exceeds 64 KiB'
         "415":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: JSON content type required
+          description: 'unsupported_media_type: non-JSON request body'
         "422":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ValidationError'
-          description: Unprocessable Entity
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'validation_failed: invalid request field'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: Update server
@@ -1301,18 +1620,22 @@ paths:
         name: serverId
         required: true
         schema:
+          minimum: 1
           type: integer
       - description: Page number
         in: query
         name: page
         schema:
           default: 1
+          minimum: 1
           type: integer
       - description: Results per page
         in: query
         name: pageSize
         schema:
           default: 20
+          maximum: 100
+          minimum: 1
           type: integer
       - description: Type
         in: query
@@ -1343,26 +1666,38 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Bad Request
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_id or invalid_query: invalid ID or query parameter'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.NotFoundError'
-          description: Not Found
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'not_found: resource not found'
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'body_too_large: request body exceeds 64 KiB'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: List server monitors
@@ -1375,6 +1710,7 @@ paths:
         name: serverId
         required: true
         schema:
+          minimum: 1
           type: integer
       requestBody:
         content:
@@ -1390,54 +1726,65 @@ paths:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_models.Monitor'
           description: Created
+          headers:
+            Location:
+              description: Created resource URI
+              schema:
+                type: string
         "400":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Malformed JSON
+          description: 'invalid_id or invalid_json: invalid ID or JSON body'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ForbiddenError'
-          description: Forbidden
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'forbidden or origin_not_allowed: role or origin not permitted'
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.NotFoundError'
-          description: Not Found
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'not_found: resource not found'
         "413":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Body exceeds 64 KiB
+          description: 'body_too_large: request body exceeds 64 KiB'
         "415":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: JSON content type required
+          description: 'unsupported_media_type: non-JSON request body'
         "422":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ValidationError'
-          description: Unprocessable Entity
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'validation_failed: invalid request field'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: Create server monitor
@@ -1451,12 +1798,14 @@ paths:
         name: serverId
         required: true
         schema:
+          minimum: 1
           type: integer
       - description: Monitor ID
         in: path
         name: monitorId
         required: true
         schema:
+          minimum: 1
           type: integer
       responses:
         "204":
@@ -1465,32 +1814,50 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Bad Request
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_id: invalid resource ID'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ForbiddenError'
-          description: Forbidden
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'forbidden or origin_not_allowed: role or origin not permitted'
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.NotFoundError'
-          description: Not Found
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'not_found: resource not found'
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'body_too_large: request body exceeds 64 KiB'
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'unsupported_media_type: non-JSON request body'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: Delete monitor and incidents
@@ -1503,12 +1870,14 @@ paths:
         name: serverId
         required: true
         schema:
+          minimum: 1
           type: integer
       - description: Monitor ID
         in: path
         name: monitorId
         required: true
         schema:
+          minimum: 1
           type: integer
       responses:
         "200":
@@ -1521,26 +1890,38 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Bad Request
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_id: invalid resource ID'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.NotFoundError'
-          description: Not Found
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'not_found: resource not found'
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'body_too_large: request body exceeds 64 KiB'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: Get monitor
@@ -1553,12 +1934,14 @@ paths:
         name: serverId
         required: true
         schema:
+          minimum: 1
           type: integer
       - description: Monitor ID
         in: path
         name: monitorId
         required: true
         schema:
+          minimum: 1
           type: integer
       requestBody:
         content:
@@ -1578,50 +1961,56 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Bad Request
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_id or invalid_json: invalid ID or JSON body'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ForbiddenError'
-          description: Forbidden
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'forbidden or origin_not_allowed: role or origin not permitted'
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.NotFoundError'
-          description: Not Found
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'not_found: resource not found'
         "413":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Body exceeds 64 KiB
+          description: 'body_too_large: request body exceeds 64 KiB'
         "415":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: JSON content type required
+          description: 'unsupported_media_type: non-JSON request body'
         "422":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ValidationError'
-          description: Unprocessable Entity
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'validation_failed: invalid request field'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: Update monitor
@@ -1635,24 +2024,29 @@ paths:
         name: serverId
         required: true
         schema:
+          minimum: 1
           type: integer
       - description: Monitor ID
         in: path
         name: monitorId
         required: true
         schema:
+          minimum: 1
           type: integer
       - description: Page number
         in: query
         name: page
         schema:
           default: 1
+          minimum: 1
           type: integer
       - description: Results per page
         in: query
         name: pageSize
         schema:
           default: 20
+          maximum: 100
+          minimum: 1
           type: integer
       - description: Severity
         in: query
@@ -1684,26 +2078,38 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Bad Request
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_id or invalid_query: invalid ID or query parameter'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.NotFoundError'
-          description: Not Found
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'not_found: resource not found'
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'body_too_large: request body exceeds 64 KiB'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: List monitor incidents
@@ -1716,12 +2122,14 @@ paths:
         name: serverId
         required: true
         schema:
+          minimum: 1
           type: integer
       - description: Monitor ID
         in: path
         name: monitorId
         required: true
         schema:
+          minimum: 1
           type: integer
       requestBody:
         content:
@@ -1737,54 +2145,65 @@ paths:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_models.Incident'
           description: Created
+          headers:
+            Location:
+              description: Created resource URI
+              schema:
+                type: string
         "400":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Malformed JSON
+          description: 'invalid_id or invalid_json: invalid ID or JSON body'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ForbiddenError'
-          description: Forbidden
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'forbidden or origin_not_allowed: role or origin not permitted'
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.NotFoundError'
-          description: Not Found
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'not_found: resource not found'
         "413":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Body exceeds 64 KiB
+          description: 'body_too_large: request body exceeds 64 KiB'
         "415":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: JSON content type required
+          description: 'unsupported_media_type: non-JSON request body'
         "422":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ValidationError'
-          description: Unprocessable Entity
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'validation_failed: invalid request field'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: Create monitor incident
@@ -1798,18 +2217,21 @@ paths:
         name: serverId
         required: true
         schema:
+          minimum: 1
           type: integer
       - description: Monitor ID
         in: path
         name: monitorId
         required: true
         schema:
+          minimum: 1
           type: integer
       - description: Incident ID
         in: path
         name: incidentId
         required: true
         schema:
+          minimum: 1
           type: integer
       responses:
         "204":
@@ -1818,32 +2240,50 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Bad Request
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_id: invalid resource ID'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ForbiddenError'
-          description: Forbidden
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'forbidden or origin_not_allowed: role or origin not permitted'
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.NotFoundError'
-          description: Not Found
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'not_found: resource not found'
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'body_too_large: request body exceeds 64 KiB'
+        "415":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'unsupported_media_type: non-JSON request body'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: Delete incident
@@ -1856,18 +2296,21 @@ paths:
         name: serverId
         required: true
         schema:
+          minimum: 1
           type: integer
       - description: Monitor ID
         in: path
         name: monitorId
         required: true
         schema:
+          minimum: 1
           type: integer
       - description: Incident ID
         in: path
         name: incidentId
         required: true
         schema:
+          minimum: 1
           type: integer
       responses:
         "200":
@@ -1880,26 +2323,38 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Bad Request
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_id: invalid resource ID'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.NotFoundError'
-          description: Not Found
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'not_found: resource not found'
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'body_too_large: request body exceeds 64 KiB'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: Get incident
@@ -1912,18 +2367,21 @@ paths:
         name: serverId
         required: true
         schema:
+          minimum: 1
           type: integer
       - description: Monitor ID
         in: path
         name: monitorId
         required: true
         schema:
+          minimum: 1
           type: integer
       - description: Incident ID
         in: path
         name: incidentId
         required: true
         schema:
+          minimum: 1
           type: integer
       requestBody:
         content:
@@ -1943,50 +2401,56 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BadRequestError'
-          description: Bad Request
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'invalid_id or invalid_json: invalid ID or JSON body'
         "401":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UnauthorizedError'
-          description: Unauthorized
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: authentication_required, invalid_token, revoked_token, or stale_token
         "403":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ForbiddenError'
-          description: Forbidden
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'forbidden or origin_not_allowed: role or origin not permitted'
         "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.NotFoundError'
-          description: Not Found
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'not_found: resource not found'
         "413":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Body exceeds 64 KiB
+          description: 'body_too_large: request body exceeds 64 KiB'
         "415":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: JSON content type required
+          description: 'unsupported_media_type: non-JSON request body'
         "422":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ValidationError'
-          description: Unprocessable Entity
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'validation_failed: invalid request field'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service temporarily unavailable
+          description: 'service_unavailable: database operation failed'
       security:
       - bearerauth: []
       summary: Update incident
@@ -2001,12 +2465,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.StatusResponse'
           description: OK
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'body_too_large: request body exceeds 64 KiB'
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'internal_error: unexpected server error'
         "503":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
-          description: Service Unavailable
+          description: 'service_unavailable: database operation failed'
       summary: Get public aggregate status
       tags:
       - system

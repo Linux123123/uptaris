@@ -25,10 +25,10 @@ import { incidentsQuery, monitorQuery } from "@/lib/queries";
 
 export const Route = createFileRoute("/app/monitors/$monitorId")({
   params: {
-    parse: (params) => ({ monitorId: z.coerce.number().int().positive().parse(params.monitorId) }),
+    parse: (params) => ({ monitorId: z.string().regex(/^\d+$/).parse(params.monitorId) }),
   },
   validateSearch: z.object({
-    serverId: z.coerce.number().int().positive(),
+    serverId: z.string().regex(/^\d+$/),
     page: z.coerce.number().int().positive().catch(1),
     pageSize: z.coerce.number().int().min(1).max(100).catch(20),
     status: z.enum(["open", "acknowledged", "resolved"]).optional().catch(undefined),
@@ -55,7 +55,7 @@ function MonitorDetailPage() {
   const canEdit = authStore.state.user?.role !== "viewer";
   const remove = useMutation({
     onError: (error) => toast.error(error.message),
-    mutationFn: (id: number) => incidentsApi.remove(serverId, monitorId, id),
+    mutationFn: (id: string) => incidentsApi.remove(serverId, monitorId, id),
     onSuccess: async () => {
       await invalidateInventory(queryClient);
       await queryClient.invalidateQueries({ queryKey: ["incidents", serverId, monitorId] });

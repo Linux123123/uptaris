@@ -78,12 +78,20 @@ func Issue(userID uint64, sessionID uint, role, secret string, ttl time.Duration
 
 func Parse(token, secret string) (*Claims, error) {
 	claims := new(Claims)
-	_, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
-		if t.Method.Alg() != jwt.SigningMethodHS256.Alg() {
-			return nil, errors.New("unexpected signing method")
-		}
-		return []byte(secret), nil
-	}, jwt.WithValidMethods([]string{"HS256"}), jwt.WithIssuer("uptaris"), jwt.WithExpirationRequired(), jwt.WithIssuedAt())
+	_, err := jwt.ParseWithClaims(
+		token,
+		claims,
+		func(t *jwt.Token) (any, error) {
+			if t.Method.Alg() != jwt.SigningMethodHS256.Alg() {
+				return nil, errors.New("unexpected signing method")
+			}
+			return []byte(secret), nil
+		},
+		jwt.WithValidMethods([]string{"HS256"}),
+		jwt.WithIssuer("uptaris"),
+		jwt.WithExpirationRequired(),
+		jwt.WithIssuedAt(),
+	)
 	if err == nil && (claims.SessionID == 0 || claims.ID == "" || claims.Subject == "" || claims.ExpiresAt == nil) {
 		err = errors.New("required claims missing")
 	}

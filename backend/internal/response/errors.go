@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/uptaris/uptaris/backend/internal/auth"
-	"github.com/uptaris/uptaris/backend/internal/inventory"
 	"github.com/uptaris/uptaris/backend/internal/users"
 	"gorm.io/gorm"
 )
@@ -26,6 +25,13 @@ func DatabaseError(c *gin.Context, err error) {
 }
 
 func Error(c *gin.Context, err error) {
+	if invalid, ok := errors.AsType[interface {
+		error
+		ValidationMessage() string
+	}](err); ok {
+		Fail(c, 422, "validation_failed", invalid.ValidationMessage())
+		return
+	}
 	if authentication, ok := errors.AsType[*auth.Error](err); ok {
 		status := 401
 		switch authentication.Code {
@@ -43,7 +49,7 @@ func Error(c *gin.Context, err error) {
 		return
 	}
 	switch {
-	case errors.Is(err, inventory.ErrValidation), errors.Is(err, users.ErrRole):
+	case errors.Is(err, users.ErrRole):
 		Fail(c, 422, "validation_failed", err.Error())
 	case errors.Is(err, users.ErrOwnRole):
 		Fail(c, 409, "self_role_change", err.Error())

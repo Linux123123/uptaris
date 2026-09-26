@@ -17,18 +17,25 @@ import (
 // @Accept json
 // @Param body body request.Credentials true "Email and password"
 // @Success 201 {object} response.CreateUserResponse
-// @Failure 400 {object} response.BadRequestError
-// @Failure 409 {object} response.ConflictError
-// @Failure 422 {object} response.ValidationError
 // @Produce json
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
-// @Failure 413 {object} response.ErrorResponse "Body exceeds 64 KiB"
-// @Failure 415 {object} response.ErrorResponse "JSON content type required"
-// @Failure 429 {object} response.ErrorResponse "Too many authentication attempts"
+// @Header 201 {string} Location "Created resource URI"
+// @Failure 400 {object} response.ErrorResponse "invalid_json: malformed JSON body"
+// @Failure 403 {object} response.ErrorResponse "origin_not_allowed: request origin not allowed"
+// @Failure 409 {object} response.ErrorResponse "email_exists: email already registered"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 415 {object} response.ErrorResponse "unsupported_media_type: non-JSON request body"
+// @Failure 422 {object} response.ErrorResponse "validation_failed: invalid request field"
+// @Failure 429 {object} response.ErrorResponse "rate_limited: too many authentication attempts"
+// @Header 429 {string} Retry-After "Seconds before retry"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /auth/register [post]
 func (h *Handlers) Register(c *gin.Context) {
 	var input request.Credentials
 	if !request.JSON(c, &input) {
+		return
+	}
+	if !request.Valid(c, request.Validate(&input)) {
 		return
 	}
 	user, err := h.auth.Register(c.Request.Context(), input.Email, input.Password)
@@ -45,18 +52,25 @@ func (h *Handlers) Register(c *gin.Context) {
 // @Accept json
 // @Param body body request.Credentials true "Email and password"
 // @Success 200 {object} response.AuthResponse
-// @Failure 400 {object} response.BadRequestError
-// @Failure 401 {object} response.UnauthorizedError
 // @Produce json
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
-// @Failure 413 {object} response.ErrorResponse "Body exceeds 64 KiB"
-// @Failure 415 {object} response.ErrorResponse "JSON content type required"
-// @Failure 422 {object} response.ValidationError
-// @Failure 429 {object} response.ErrorResponse "Too many authentication attempts"
+// @Header 200 {string} Set-Cookie "HttpOnly refresh cookie"
+// @Failure 400 {object} response.ErrorResponse "invalid_json: malformed JSON body"
+// @Failure 401 {object} response.ErrorResponse "invalid_credentials: email or password invalid"
+// @Failure 403 {object} response.ErrorResponse "origin_not_allowed: request origin not allowed"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 415 {object} response.ErrorResponse "unsupported_media_type: non-JSON request body"
+// @Failure 422 {object} response.ErrorResponse "validation_failed: invalid request field"
+// @Failure 429 {object} response.ErrorResponse "rate_limited: too many authentication attempts"
+// @Header 429 {string} Retry-After "Seconds before retry"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /auth/login [post]
 func (h *Handlers) Login(c *gin.Context) {
 	var input request.Credentials
 	if !request.JSON(c, &input) {
+		return
+	}
+	if !request.Valid(c, request.Validate(&input)) {
 		return
 	}
 	session, err := h.auth.Login(c.Request.Context(), input.Email, input.Password)
@@ -68,12 +82,17 @@ func (h *Handlers) Login(c *gin.Context) {
 }
 
 // @Summary Refresh access token
-// @Description Rotates the HttpOnly refresh cookie atomically within the existing session.
+// @Description Requires uptaris_refresh HttpOnly cookie from login or previous refresh. Rotates it atomically within the existing session.
 // @Tags auth
 // @Success 200 {object} response.AuthResponse
-// @Failure 401 {object} response.ErrorResponse
 // @Produce json
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
+// @Header 200 {string} Set-Cookie "HttpOnly refresh cookie"
+// @Failure 401 {object} response.ErrorResponse "refresh_required or invalid_refresh: refresh cookie missing or invalid"
+// @Failure 403 {object} response.ErrorResponse "origin_not_allowed: request origin not allowed"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 415 {object} response.ErrorResponse "unsupported_media_type: non-JSON request body"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /auth/refresh [post]
 func (h *Handlers) Refresh(c *gin.Context) {
 	cookie, err := c.Request.Cookie("uptaris_refresh")
@@ -94,9 +113,14 @@ func (h *Handlers) Refresh(c *gin.Context) {
 // @Tags auth
 // @Security bearerauth
 // @Success 204
-// @Failure 401 {object} response.ErrorResponse
 // @Produce json
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
+// @Header 204 {string} Set-Cookie "Expired refresh cookie"
+// @Failure 401 {object} response.ErrorResponse "authentication_required, invalid_token, revoked_token, or stale_token"
+// @Failure 403 {object} response.ErrorResponse "origin_not_allowed: request origin not allowed"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 415 {object} response.ErrorResponse "unsupported_media_type: non-JSON request body"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /auth/logout [post]
 func (h *Handlers) Logout(c *gin.Context) {
 	identity, ok := middleware.Require(c, h.auth, "viewer", "operator", "admin")
@@ -115,9 +139,11 @@ func (h *Handlers) Logout(c *gin.Context) {
 // @Tags auth
 // @Security bearerauth
 // @Success 200 {object} response.UserResponse
-// @Failure 401 {object} response.ErrorResponse
 // @Produce json
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
+// @Failure 401 {object} response.ErrorResponse "authentication_required, invalid_token, revoked_token, or stale_token"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /auth/me [get]
 func (h *Handlers) Me(c *gin.Context) {
 	identity, ok := middleware.Require(c, h.auth, "viewer", "operator", "admin")

@@ -12,10 +12,10 @@ export type Links = { self: string; next: string | null; previous: string | null
 export type Pagination = { page: number; pageSize: number; total: number; totalPages: number };
 export type ListResponse<T> = { data: T[]; pagination: Pagination; links: Links };
 export type ResourceResponse<T> = { data: T; _links: Record<string, string> };
-export type User = { id: number; email: string; role: Role; createdAt: string; updatedAt: string };
+export type User = { id: string; email: string; role: Role; createdAt: string; updatedAt: string };
 export type Server = {
-  id: number;
-  ownerId: number;
+  id: string;
+  ownerId: string;
   name: string;
   address: string;
   operatingSystem: string;
@@ -25,8 +25,8 @@ export type Server = {
   updatedAt: string;
 };
 export type Monitor = {
-  id: number;
-  serverId: number;
+  id: string;
+  serverId: string;
   name: string;
   type: MonitorType;
   target: string;
@@ -38,8 +38,8 @@ export type Monitor = {
   updatedAt: string;
 };
 export type Incident = {
-  id: number;
-  monitorId: number;
+  id: string;
+  monitorId: string;
   title: string;
   description: string;
   severity: IncidentSeverity;
@@ -152,36 +152,36 @@ export const serversApi = {
     params: { page?: number; pageSize?: number; status?: ServerStatus } = {},
     signal?: AbortSignal,
   ) => api<ListResponse<Server>>(withQuery("/servers", params), { signal }),
-  get: (id: number, signal?: AbortSignal) =>
+  get: (id: string, signal?: AbortSignal) =>
     api<ResourceResponse<Server>>(`/servers/${id}`, { signal }),
   create: (
     body: Pick<Server, "name" | "address" | "operatingSystem"> &
       Partial<Pick<Server, "description" | "status">>,
   ) => api<Server>("/servers", { method: "POST", body: JSON.stringify(body) }),
   update: (
-    id: number,
+    id: string,
     body: Partial<Pick<Server, "name" | "address" | "operatingSystem" | "description" | "status">>,
   ) => api<Server>(`/servers/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
-  remove: (id: number) => api<void>(`/servers/${id}`, { method: "DELETE" }),
+  remove: (id: string) => api<void>(`/servers/${id}`, { method: "DELETE" }),
 };
 
 export const monitorsApi = {
   list: (
-    serverId: number,
+    serverId: string,
     params: { page?: number; pageSize?: number; type?: MonitorType; status?: ServerStatus } = {},
     signal?: AbortSignal,
   ) => api<ListResponse<Monitor>>(withQuery(`/servers/${serverId}/monitors`, params), { signal }),
-  get: (serverId: number, id: number, signal?: AbortSignal) =>
+  get: (serverId: string, id: string, signal?: AbortSignal) =>
     api<ResourceResponse<Monitor>>(`/servers/${serverId}/monitors/${id}`, { signal }),
   create: (
-    serverId: number,
+    serverId: string,
     body: Pick<Monitor, "name" | "type" | "target" | "intervalSeconds" | "expectedHealth"> &
       Partial<Pick<Monitor, "status">>,
   ) =>
     api<Monitor>(`/servers/${serverId}/monitors`, { method: "POST", body: JSON.stringify(body) }),
   update: (
-    serverId: number,
-    id: number,
+    serverId: string,
+    id: string,
     body: Partial<
       Pick<Monitor, "name" | "type" | "target" | "intervalSeconds" | "expectedHealth" | "status">
     >,
@@ -190,11 +190,11 @@ export const monitorsApi = {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
-  remove: (serverId: number, id: number) =>
+  remove: (serverId: string, id: string) =>
     api<void>(`/servers/${serverId}/monitors/${id}`, { method: "DELETE" }),
 };
 
-export type IncidentRow = Incident & { serverId: number; monitorName: string };
+export type IncidentRow = Incident & { serverId: string; monitorName: string };
 export const incidentsApi = {
   overview: (
     params: {
@@ -205,13 +205,13 @@ export const incidentsApi = {
     },
     signal?: AbortSignal,
   ) => api<ListResponse<IncidentRow>>(withQuery("/incidents", params), { signal }),
-  get: (serverId: number, monitorId: number, id: number, signal?: AbortSignal) =>
+  get: (serverId: string, monitorId: string, id: string, signal?: AbortSignal) =>
     api<ResourceResponse<Incident>>(`/servers/${serverId}/monitors/${monitorId}/incidents/${id}`, {
       signal,
     }),
   list: (
-    serverId: number,
-    monitorId: number,
+    serverId: string,
+    monitorId: string,
     params: {
       page?: number;
       pageSize?: number;
@@ -225,8 +225,8 @@ export const incidentsApi = {
       { signal },
     ),
   create: (
-    serverId: number,
-    monitorId: number,
+    serverId: string,
+    monitorId: string,
     body: Pick<Incident, "title" | "severity"> &
       Partial<Pick<Incident, "description" | "status" | "startedAt" | "resolvedAt">>,
   ) =>
@@ -235,9 +235,9 @@ export const incidentsApi = {
       body: JSON.stringify(body),
     }),
   update: (
-    serverId: number,
-    monitorId: number,
-    id: number,
+    serverId: string,
+    monitorId: string,
+    id: string,
     body: Partial<
       Pick<Incident, "title" | "description" | "severity" | "status" | "startedAt" | "resolvedAt">
     >,
@@ -246,15 +246,15 @@ export const incidentsApi = {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
-  remove: (serverId: number, monitorId: number, id: number) =>
+  remove: (serverId: string, monitorId: string, id: string) =>
     api<void>(`/servers/${serverId}/monitors/${monitorId}/incidents/${id}`, { method: "DELETE" }),
 };
 
 export const adminApi = {
   users: (params: { page?: number; pageSize?: number } = {}, signal?: AbortSignal) =>
     api<ListResponse<User>>(withQuery("/admin/users", params), { signal }),
-  removeUser: (id: number) => api<void>(`/admin/users/${id}`, { method: "DELETE" }),
-  updateRole: (id: number, role: Role) =>
+  removeUser: (id: string) => api<void>(`/admin/users/${id}`, { method: "DELETE" }),
+  updateRole: (id: string, role: Role) =>
     api<User>(`/admin/users/${id}`, {
       method: "PATCH",
       body: JSON.stringify({ role }),

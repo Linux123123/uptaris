@@ -25,14 +25,14 @@ export const serversQuery = (filters: { page: number; pageSize: number; status?:
     placeholderData: keepPreviousData,
   });
 
-export const serverQuery = (serverId: number) =>
+export const serverQuery = (serverId: string) =>
   queryOptions({
     queryKey: ["server", serverId] as const,
     queryFn: ({ signal }) => serversApi.get(serverId, signal),
   });
 
 export const monitorsQuery = (
-  serverId: number,
+  serverId: string,
   filters: { page: number; pageSize: number; type?: MonitorType; status?: ServerStatus },
 ) =>
   queryOptions({
@@ -41,15 +41,15 @@ export const monitorsQuery = (
     placeholderData: keepPreviousData,
   });
 
-export const monitorQuery = (serverId: number, monitorId: number) =>
+export const monitorQuery = (serverId: string, monitorId: string) =>
   queryOptions({
     queryKey: ["monitor", serverId, monitorId] as const,
     queryFn: ({ signal }) => monitorsApi.get(serverId, monitorId, signal),
   });
 
 export const incidentsQuery = (
-  serverId: number,
-  monitorId: number,
+  serverId: string,
+  monitorId: string,
   filters: { page: number; pageSize: number; severity?: IncidentSeverity; status?: IncidentStatus },
 ) =>
   queryOptions({

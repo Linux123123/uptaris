@@ -10,14 +10,16 @@ import (
 // @Summary List users
 // @Tags admin
 // @Security bearerauth
-// @Param page query int false "Page number" default(1)
-// @Param pageSize query int false "Results per page" default(20)
+// @Param page query int false "Page number" default(1) minimum(1)
+// @Param pageSize query int false "Results per page" default(20) minimum(1) maximum(100)
 // @Success 200 {object} response.UserListResponse
-// @Failure 401 {object} response.UnauthorizedError
-// @Failure 403 {object} response.ForbiddenError
 // @Produce json
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
-// @Failure 400 {object} response.BadRequestError
+// @Failure 400 {object} response.ErrorResponse "invalid_query: invalid query parameter"
+// @Failure 401 {object} response.ErrorResponse "authentication_required, invalid_token, revoked_token, or stale_token"
+// @Failure 403 {object} response.ErrorResponse "forbidden: administrator role required"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /admin/users [get]
 func (h *Handlers) Users(c *gin.Context) {
 	_, ok := middleware.Require(c, h.auth, "admin")
@@ -45,15 +47,16 @@ func (h *Handlers) Users(c *gin.Context) {
 // @Param userId path int true "User ID" minimum(1)
 // @Param body body request.UserRoleInput true "New user role"
 // @Success 200 {object} response.UserRecord
-// @Failure 400 {object} response.BadRequestError "Malformed user ID or JSON"
-// @Failure 401 {object} response.UnauthorizedError
-// @Failure 403 {object} response.ForbiddenError
-// @Failure 404 {object} response.NotFoundError "User not found"
-// @Failure 409 {object} response.ConflictError "Administrator cannot change own role"
-// @Failure 422 {object} response.ValidationError "Role must be viewer, operator, or admin"
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
-// @Failure 413 {object} response.ErrorResponse "Body exceeds 64 KiB"
-// @Failure 415 {object} response.ErrorResponse "JSON content type required"
+// @Failure 400 {object} response.ErrorResponse "invalid_id or invalid_json: invalid ID or JSON body"
+// @Failure 401 {object} response.ErrorResponse "authentication_required, invalid_token, revoked_token, or stale_token"
+// @Failure 403 {object} response.ErrorResponse "forbidden or origin_not_allowed: role or origin not permitted"
+// @Failure 404 {object} response.ErrorResponse "not_found: resource not found"
+// @Failure 409 {object} response.ErrorResponse "self_role_change: cannot change own role"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 415 {object} response.ErrorResponse "unsupported_media_type: non-JSON request body"
+// @Failure 422 {object} response.ErrorResponse "validation_failed: invalid request field"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /admin/users/{userId} [patch]
 func (h *Handlers) UpdateUserRole(c *gin.Context) {
 	identity, ok := middleware.Require(c, h.auth, "admin")
@@ -68,6 +71,9 @@ func (h *Handlers) UpdateUserRole(c *gin.Context) {
 	if !request.JSON(c, &input) {
 		return
 	}
+	if !request.Valid(c, request.Validate(&input)) {
+		return
+	}
 	user, err := h.users.ChangeRole(c.Request.Context(), identity, id, input.Role)
 	if !response.ResourceError(c, err, "user") {
 		return
@@ -78,15 +84,18 @@ func (h *Handlers) UpdateUserRole(c *gin.Context) {
 // @Summary Delete user and revoke sessions
 // @Tags admin
 // @Security bearerauth
-// @Param userId path int true "User ID"
+// @Param userId path int true "User ID" minimum(1)
 // @Success 204
-// @Failure 400 {object} response.BadRequestError
-// @Failure 401 {object} response.UnauthorizedError
-// @Failure 403 {object} response.ForbiddenError
-// @Failure 409 {object} response.ConflictError
 // @Produce json
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
-// @Failure 404 {object} response.NotFoundError
+// @Failure 400 {object} response.ErrorResponse "invalid_id: invalid resource ID"
+// @Failure 401 {object} response.ErrorResponse "authentication_required, invalid_token, revoked_token, or stale_token"
+// @Failure 403 {object} response.ErrorResponse "forbidden or origin_not_allowed: role or origin not permitted"
+// @Failure 404 {object} response.ErrorResponse "not_found: resource not found"
+// @Failure 409 {object} response.ErrorResponse "self_delete: cannot delete own account"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 415 {object} response.ErrorResponse "unsupported_media_type: non-JSON request body"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /admin/users/{userId} [delete]
 func (h *Handlers) DeleteUser(c *gin.Context) {
 	identity, ok := middleware.Require(c, h.auth, "admin")

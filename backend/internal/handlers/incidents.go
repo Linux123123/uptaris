@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/uptaris/uptaris/backend/internal/auth"
-	"github.com/uptaris/uptaris/backend/internal/inventory"
 	"github.com/uptaris/uptaris/backend/internal/models"
 	"github.com/uptaris/uptaris/backend/internal/request"
 	"github.com/uptaris/uptaris/backend/internal/response"
@@ -15,18 +14,20 @@ import (
 // @Summary List monitor incidents
 // @Tags incidents
 // @Security bearerauth
-// @Param serverId path int true "Server ID"
-// @Param monitorId path int true "Monitor ID"
-// @Param page query int false "Page number" default(1)
-// @Param pageSize query int false "Results per page" default(20)
+// @Param serverId path int true "Server ID" minimum(1)
+// @Param monitorId path int true "Monitor ID" minimum(1)
+// @Param page query int false "Page number" default(1) minimum(1)
+// @Param pageSize query int false "Results per page" default(20) minimum(1) maximum(100)
 // @Param severity query string false "Severity" Enums(low,medium,high,critical)
 // @Param status query string false "Status" Enums(open,acknowledged,resolved)
 // @Success 200 {object} response.IncidentListResponse
-// @Failure 400 {object} response.BadRequestError
-// @Failure 401 {object} response.UnauthorizedError
-// @Failure 404 {object} response.NotFoundError
 // @Produce json
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
+// @Failure 400 {object} response.ErrorResponse "invalid_id or invalid_query: invalid ID or query parameter"
+// @Failure 401 {object} response.ErrorResponse "authentication_required, invalid_token, revoked_token, or stale_token"
+// @Failure 404 {object} response.ErrorResponse "not_found: resource not found"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /servers/{serverId}/monitors/{monitorId}/incidents [get]
 func (h *Handlers) Incidents(c *gin.Context) {
 	_, _, monitor, ok := h.oneMonitor(c)
@@ -37,7 +38,7 @@ func (h *Handlers) Incidents(c *gin.Context) {
 	if !ok {
 		return
 	}
-	filters := inventory.Filters{}
+	filters := models.Filters{}
 	filters.Severity, ok = request.Filter(c, "severity", "low", "medium", "high", "critical")
 	if !ok {
 		return
@@ -46,7 +47,7 @@ func (h *Handlers) Incidents(c *gin.Context) {
 	if !ok {
 		return
 	}
-	rows, total, err := h.inventory.Incidents(c.Request.Context(), monitor.ID, inventory.Page{Number: pageNumber, Size: pageSize}, filters)
+	rows, total, err := models.ListIncidents(c.Request.Context(), h.db, monitor.ID, models.Page{Number: pageNumber, Size: pageSize}, filters)
 	if !response.ResourceError(c, err, "incident") {
 		return
 	}
@@ -57,19 +58,21 @@ func (h *Handlers) Incidents(c *gin.Context) {
 // @Tags incidents
 // @Accept json
 // @Security bearerauth
-// @Param serverId path int true "Server ID"
-// @Param monitorId path int true "Monitor ID"
+// @Param serverId path int true "Server ID" minimum(1)
+// @Param monitorId path int true "Monitor ID" minimum(1)
 // @Param body body request.IncidentInput true "Incident fields"
 // @Success 201 {object} models.Incident
-// @Failure 401 {object} response.UnauthorizedError
-// @Failure 403 {object} response.ForbiddenError
-// @Failure 404 {object} response.NotFoundError
-// @Failure 422 {object} response.ValidationError
 // @Produce json
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
-// @Failure 400 {object} response.ErrorResponse "Malformed JSON"
-// @Failure 413 {object} response.ErrorResponse "Body exceeds 64 KiB"
-// @Failure 415 {object} response.ErrorResponse "JSON content type required"
+// @Header 201 {string} Location "Created resource URI"
+// @Failure 400 {object} response.ErrorResponse "invalid_id or invalid_json: invalid ID or JSON body"
+// @Failure 401 {object} response.ErrorResponse "authentication_required, invalid_token, revoked_token, or stale_token"
+// @Failure 403 {object} response.ErrorResponse "forbidden or origin_not_allowed: role or origin not permitted"
+// @Failure 404 {object} response.ErrorResponse "not_found: resource not found"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 415 {object} response.ErrorResponse "unsupported_media_type: non-JSON request body"
+// @Failure 422 {object} response.ErrorResponse "validation_failed: invalid request field"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /servers/{serverId}/monitors/{monitorId}/incidents [post]
 func (h *Handlers) CreateIncident(c *gin.Context) {
 	currentActor, _, monitor, ok := h.oneMonitor(c)
@@ -97,7 +100,10 @@ func (h *Handlers) CreateIncident(c *gin.Context) {
 		StartedAt:   started,
 		ResolvedAt:  input.ResolvedAt,
 	}
-	if err := h.inventory.CreateIncident(c.Request.Context(), &incident); err != nil {
+	if !request.Valid(c, request.PrepareIncident(&incident)) {
+		return
+	}
+	if err := incident.Create(c.Request.Context(), h.db); err != nil {
 		response.Error(c, err)
 		return
 	}
@@ -114,7 +120,7 @@ func (h *Handlers) oneIncident(c *gin.Context) (auth.Identity, *models.Incident,
 	if !ok {
 		return currentActor, nil, false
 	}
-	incident, err := h.inventory.Incident(c.Request.Context(), monitor.ID, iid)
+	incident, err := models.GetIncident(c.Request.Context(), h.db, monitor.ID, iid)
 	if !response.ResourceError(c, err, "incident") {
 		return currentActor, nil, false
 	}
@@ -124,15 +130,17 @@ func (h *Handlers) oneIncident(c *gin.Context) (auth.Identity, *models.Incident,
 // @Summary Get incident
 // @Tags incidents
 // @Security bearerauth
-// @Param serverId path int true "Server ID"
-// @Param monitorId path int true "Monitor ID"
-// @Param incidentId path int true "Incident ID"
+// @Param serverId path int true "Server ID" minimum(1)
+// @Param monitorId path int true "Monitor ID" minimum(1)
+// @Param incidentId path int true "Incident ID" minimum(1)
 // @Success 200 {object} response.IncidentResponse
-// @Failure 400 {object} response.BadRequestError
-// @Failure 401 {object} response.UnauthorizedError
-// @Failure 404 {object} response.NotFoundError
 // @Produce json
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
+// @Failure 400 {object} response.ErrorResponse "invalid_id: invalid resource ID"
+// @Failure 401 {object} response.ErrorResponse "authentication_required, invalid_token, revoked_token, or stale_token"
+// @Failure 404 {object} response.ErrorResponse "not_found: resource not found"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /servers/{serverId}/monitors/{monitorId}/incidents/{incidentId} [get]
 func (h *Handlers) GetIncident(c *gin.Context) {
 	_, incident, ok := h.oneIncident(c)
@@ -145,20 +153,21 @@ func (h *Handlers) GetIncident(c *gin.Context) {
 // @Tags incidents
 // @Accept json
 // @Security bearerauth
-// @Param serverId path int true "Server ID"
-// @Param monitorId path int true "Monitor ID"
-// @Param incidentId path int true "Incident ID"
+// @Param serverId path int true "Server ID" minimum(1)
+// @Param monitorId path int true "Monitor ID" minimum(1)
+// @Param incidentId path int true "Incident ID" minimum(1)
 // @Param body body request.IncidentPatchInput true "Fields to update"
 // @Success 200 {object} models.Incident
-// @Failure 400 {object} response.BadRequestError
-// @Failure 401 {object} response.UnauthorizedError
-// @Failure 403 {object} response.ForbiddenError
-// @Failure 404 {object} response.NotFoundError
-// @Failure 422 {object} response.ValidationError
 // @Produce json
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
-// @Failure 413 {object} response.ErrorResponse "Body exceeds 64 KiB"
-// @Failure 415 {object} response.ErrorResponse "JSON content type required"
+// @Failure 400 {object} response.ErrorResponse "invalid_id or invalid_json: invalid ID or JSON body"
+// @Failure 401 {object} response.ErrorResponse "authentication_required, invalid_token, revoked_token, or stale_token"
+// @Failure 403 {object} response.ErrorResponse "forbidden or origin_not_allowed: role or origin not permitted"
+// @Failure 404 {object} response.ErrorResponse "not_found: resource not found"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 415 {object} response.ErrorResponse "unsupported_media_type: non-JSON request body"
+// @Failure 422 {object} response.ErrorResponse "validation_failed: invalid request field"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /servers/{serverId}/monitors/{monitorId}/incidents/{incidentId} [patch]
 func (h *Handlers) UpdateIncident(c *gin.Context) {
 	currentActor, incident, ok := h.oneIncident(c)
@@ -174,7 +183,10 @@ func (h *Handlers) UpdateIncident(c *gin.Context) {
 		return
 	}
 
-	err := h.inventory.UpdateIncident(c.Request.Context(), incident, input)
+	err := incident.Update(c.Request.Context(), h.db, func(value *models.Incident) error {
+		input.Apply(value)
+		return request.PrepareIncident(value)
+	})
 	if !response.ResourceError(c, err, "incident") {
 		return
 	}
@@ -184,16 +196,19 @@ func (h *Handlers) UpdateIncident(c *gin.Context) {
 // @Summary Delete incident
 // @Tags incidents
 // @Security bearerauth
-// @Param serverId path int true "Server ID"
-// @Param monitorId path int true "Monitor ID"
-// @Param incidentId path int true "Incident ID"
+// @Param serverId path int true "Server ID" minimum(1)
+// @Param monitorId path int true "Monitor ID" minimum(1)
+// @Param incidentId path int true "Incident ID" minimum(1)
 // @Success 204
-// @Failure 400 {object} response.BadRequestError
-// @Failure 401 {object} response.UnauthorizedError
-// @Failure 403 {object} response.ForbiddenError
-// @Failure 404 {object} response.NotFoundError
 // @Produce json
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
+// @Failure 400 {object} response.ErrorResponse "invalid_id: invalid resource ID"
+// @Failure 401 {object} response.ErrorResponse "authentication_required, invalid_token, revoked_token, or stale_token"
+// @Failure 403 {object} response.ErrorResponse "forbidden or origin_not_allowed: role or origin not permitted"
+// @Failure 404 {object} response.ErrorResponse "not_found: resource not found"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 415 {object} response.ErrorResponse "unsupported_media_type: non-JSON request body"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /servers/{serverId}/monitors/{monitorId}/incidents/{incidentId} [delete]
 func (h *Handlers) DeleteIncident(c *gin.Context) {
 	currentActor, incident, ok := h.oneIncident(c)
@@ -204,7 +219,7 @@ func (h *Handlers) DeleteIncident(c *gin.Context) {
 		response.Fail(c, 403, "forbidden", "viewer is read only")
 		return
 	}
-	if err := h.inventory.DeleteIncident(c.Request.Context(), incident.ID); err != nil {
+	if err := incident.Delete(c.Request.Context(), h.db); err != nil {
 		response.Error(c, err)
 		return
 	}

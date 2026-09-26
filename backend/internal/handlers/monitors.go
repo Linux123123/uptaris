@@ -5,7 +5,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/uptaris/uptaris/backend/internal/auth"
-	"github.com/uptaris/uptaris/backend/internal/inventory"
 	"github.com/uptaris/uptaris/backend/internal/models"
 	"github.com/uptaris/uptaris/backend/internal/request"
 	"github.com/uptaris/uptaris/backend/internal/response"
@@ -14,17 +13,19 @@ import (
 // @Summary List server monitors
 // @Tags monitors
 // @Security bearerauth
-// @Param serverId path int true "Server ID"
-// @Param page query int false "Page number" default(1)
-// @Param pageSize query int false "Results per page" default(20)
+// @Param serverId path int true "Server ID" minimum(1)
+// @Param page query int false "Page number" default(1) minimum(1)
+// @Param pageSize query int false "Results per page" default(20) minimum(1) maximum(100)
 // @Param type query string false "Type" Enums(http,tcp,icmp)
 // @Param status query string false "Status" Enums(up,down,paused)
 // @Success 200 {object} response.MonitorListResponse
-// @Failure 400 {object} response.BadRequestError
-// @Failure 401 {object} response.UnauthorizedError
-// @Failure 404 {object} response.NotFoundError
 // @Produce json
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
+// @Failure 400 {object} response.ErrorResponse "invalid_id or invalid_query: invalid ID or query parameter"
+// @Failure 401 {object} response.ErrorResponse "authentication_required, invalid_token, revoked_token, or stale_token"
+// @Failure 404 {object} response.ErrorResponse "not_found: resource not found"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /servers/{serverId}/monitors [get]
 func (h *Handlers) Monitors(c *gin.Context) {
 	_, server, ok := h.oneServer(c)
@@ -35,7 +36,7 @@ func (h *Handlers) Monitors(c *gin.Context) {
 	if !ok {
 		return
 	}
-	filters := inventory.Filters{}
+	filters := models.Filters{}
 	filters.Type, ok = request.Filter(c, "type", "http", "tcp", "icmp")
 	if !ok {
 		return
@@ -44,7 +45,7 @@ func (h *Handlers) Monitors(c *gin.Context) {
 	if !ok {
 		return
 	}
-	rows, total, err := h.inventory.Monitors(c.Request.Context(), server.ID, inventory.Page{Number: pageNumber, Size: pageSize}, filters)
+	rows, total, err := models.ListMonitors(c.Request.Context(), h.db, server.ID, models.Page{Number: pageNumber, Size: pageSize}, filters)
 	if !response.ResourceError(c, err, "monitor") {
 		return
 	}
@@ -55,18 +56,20 @@ func (h *Handlers) Monitors(c *gin.Context) {
 // @Tags monitors
 // @Accept json
 // @Security bearerauth
-// @Param serverId path int true "Server ID"
+// @Param serverId path int true "Server ID" minimum(1)
 // @Param body body request.MonitorInput true "Monitor fields"
 // @Success 201 {object} models.Monitor
-// @Failure 401 {object} response.UnauthorizedError
-// @Failure 403 {object} response.ForbiddenError
-// @Failure 404 {object} response.NotFoundError
-// @Failure 422 {object} response.ValidationError
 // @Produce json
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
-// @Failure 400 {object} response.ErrorResponse "Malformed JSON"
-// @Failure 413 {object} response.ErrorResponse "Body exceeds 64 KiB"
-// @Failure 415 {object} response.ErrorResponse "JSON content type required"
+// @Header 201 {string} Location "Created resource URI"
+// @Failure 400 {object} response.ErrorResponse "invalid_id or invalid_json: invalid ID or JSON body"
+// @Failure 401 {object} response.ErrorResponse "authentication_required, invalid_token, revoked_token, or stale_token"
+// @Failure 403 {object} response.ErrorResponse "forbidden or origin_not_allowed: role or origin not permitted"
+// @Failure 404 {object} response.ErrorResponse "not_found: resource not found"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 415 {object} response.ErrorResponse "unsupported_media_type: non-JSON request body"
+// @Failure 422 {object} response.ErrorResponse "validation_failed: invalid request field"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /servers/{serverId}/monitors [post]
 func (h *Handlers) CreateMonitor(c *gin.Context) {
 	currentActor, server, ok := h.oneServer(c)
@@ -90,7 +93,10 @@ func (h *Handlers) CreateMonitor(c *gin.Context) {
 		ExpectedHealth:  input.ExpectedHealth,
 		Status:          defaultOf(input.Status, "up"),
 	}
-	if err := h.inventory.CreateMonitor(c.Request.Context(), &monitor); err != nil {
+	if !request.Valid(c, request.PrepareMonitor(&monitor)) {
+		return
+	}
+	if err := monitor.Create(c.Request.Context(), h.db); err != nil {
 		response.Error(c, err)
 		return
 	}
@@ -107,7 +113,7 @@ func (h *Handlers) oneMonitor(c *gin.Context) (auth.Identity, *models.Server, *m
 	if !ok {
 		return currentActor, nil, nil, false
 	}
-	monitor, err := h.inventory.Monitor(c.Request.Context(), server.ID, monitorID)
+	monitor, err := models.GetMonitor(c.Request.Context(), h.db, server.ID, monitorID)
 	if !response.ResourceError(c, err, "monitor") {
 		return currentActor, nil, nil, false
 	}
@@ -117,14 +123,16 @@ func (h *Handlers) oneMonitor(c *gin.Context) (auth.Identity, *models.Server, *m
 // @Summary Get monitor
 // @Tags monitors
 // @Security bearerauth
-// @Param serverId path int true "Server ID"
-// @Param monitorId path int true "Monitor ID"
+// @Param serverId path int true "Server ID" minimum(1)
+// @Param monitorId path int true "Monitor ID" minimum(1)
 // @Success 200 {object} response.MonitorResponse
-// @Failure 400 {object} response.BadRequestError
-// @Failure 401 {object} response.UnauthorizedError
-// @Failure 404 {object} response.NotFoundError
 // @Produce json
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
+// @Failure 400 {object} response.ErrorResponse "invalid_id: invalid resource ID"
+// @Failure 401 {object} response.ErrorResponse "authentication_required, invalid_token, revoked_token, or stale_token"
+// @Failure 404 {object} response.ErrorResponse "not_found: resource not found"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /servers/{serverId}/monitors/{monitorId} [get]
 func (h *Handlers) GetMonitor(c *gin.Context) {
 	_, _, monitor, ok := h.oneMonitor(c)
@@ -137,19 +145,20 @@ func (h *Handlers) GetMonitor(c *gin.Context) {
 // @Tags monitors
 // @Accept json
 // @Security bearerauth
-// @Param serverId path int true "Server ID"
-// @Param monitorId path int true "Monitor ID"
+// @Param serverId path int true "Server ID" minimum(1)
+// @Param monitorId path int true "Monitor ID" minimum(1)
 // @Param body body request.MonitorPatchInput true "Fields to update"
 // @Success 200 {object} models.Monitor
-// @Failure 400 {object} response.BadRequestError
-// @Failure 401 {object} response.UnauthorizedError
-// @Failure 403 {object} response.ForbiddenError
-// @Failure 404 {object} response.NotFoundError
-// @Failure 422 {object} response.ValidationError
 // @Produce json
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
-// @Failure 413 {object} response.ErrorResponse "Body exceeds 64 KiB"
-// @Failure 415 {object} response.ErrorResponse "JSON content type required"
+// @Failure 400 {object} response.ErrorResponse "invalid_id or invalid_json: invalid ID or JSON body"
+// @Failure 401 {object} response.ErrorResponse "authentication_required, invalid_token, revoked_token, or stale_token"
+// @Failure 403 {object} response.ErrorResponse "forbidden or origin_not_allowed: role or origin not permitted"
+// @Failure 404 {object} response.ErrorResponse "not_found: resource not found"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 415 {object} response.ErrorResponse "unsupported_media_type: non-JSON request body"
+// @Failure 422 {object} response.ErrorResponse "validation_failed: invalid request field"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /servers/{serverId}/monitors/{monitorId} [patch]
 func (h *Handlers) UpdateMonitor(c *gin.Context) {
 	currentActor, _, monitor, ok := h.oneMonitor(c)
@@ -165,7 +174,10 @@ func (h *Handlers) UpdateMonitor(c *gin.Context) {
 		return
 	}
 
-	err := h.inventory.UpdateMonitor(c.Request.Context(), monitor, input)
+	err := monitor.Update(c.Request.Context(), h.db, func(value *models.Monitor) error {
+		input.Apply(value)
+		return request.PrepareMonitor(value)
+	})
 	if !response.ResourceError(c, err, "monitor") {
 		return
 	}
@@ -175,15 +187,18 @@ func (h *Handlers) UpdateMonitor(c *gin.Context) {
 // @Summary Delete monitor and incidents
 // @Tags monitors
 // @Security bearerauth
-// @Param serverId path int true "Server ID"
-// @Param monitorId path int true "Monitor ID"
+// @Param serverId path int true "Server ID" minimum(1)
+// @Param monitorId path int true "Monitor ID" minimum(1)
 // @Success 204
-// @Failure 400 {object} response.BadRequestError
-// @Failure 401 {object} response.UnauthorizedError
-// @Failure 403 {object} response.ForbiddenError
-// @Failure 404 {object} response.NotFoundError
 // @Produce json
-// @Failure 503 {object} response.ErrorResponse "Service temporarily unavailable"
+// @Failure 400 {object} response.ErrorResponse "invalid_id: invalid resource ID"
+// @Failure 401 {object} response.ErrorResponse "authentication_required, invalid_token, revoked_token, or stale_token"
+// @Failure 403 {object} response.ErrorResponse "forbidden or origin_not_allowed: role or origin not permitted"
+// @Failure 404 {object} response.ErrorResponse "not_found: resource not found"
+// @Failure 413 {object} response.ErrorResponse "body_too_large: request body exceeds 64 KiB"
+// @Failure 415 {object} response.ErrorResponse "unsupported_media_type: non-JSON request body"
+// @Failure 500 {object} response.ErrorResponse "internal_error: unexpected server error"
+// @Failure 503 {object} response.ErrorResponse "service_unavailable: database operation failed"
 // @Router /servers/{serverId}/monitors/{monitorId} [delete]
 func (h *Handlers) DeleteMonitor(c *gin.Context) {
 	currentActor, _, monitor, ok := h.oneMonitor(c)
@@ -194,7 +209,7 @@ func (h *Handlers) DeleteMonitor(c *gin.Context) {
 		response.Fail(c, 403, "forbidden", "viewer is read only")
 		return
 	}
-	if err := h.inventory.DeleteMonitor(c.Request.Context(), monitor.ID); err != nil {
+	if err := monitor.Delete(c.Request.Context(), h.db); err != nil {
 		response.Error(c, err)
 		return
 	}

@@ -1,58 +1,15 @@
 package response
 
 import (
-	"github.com/uptaris/uptaris/backend/internal/inventory"
 	"github.com/uptaris/uptaris/backend/internal/models"
 )
 
 // ErrorResponse is returned for every non-success API response.
 type ErrorResponse struct {
 	Error struct {
-		Code    string `json:"code" example:"validation_failed"`
-		Message string `json:"message" example:"valid server fields required"`
-	} `json:"error"`
-}
-
-type BadRequestError struct {
-	Error struct {
-		Code    string `json:"code" example:"invalid_json"`
-		Message string `json:"message" example:"valid JSON required"`
-	} `json:"error"`
-}
-
-type UnauthorizedError struct {
-	Error struct {
-		Code    string `json:"code" example:"authentication_required"`
-		Message string `json:"message" example:"bearer token required"`
-	} `json:"error"`
-}
-
-type ForbiddenError struct {
-	Error struct {
-		Code    string `json:"code" example:"forbidden"`
-		Message string `json:"message" example:"role not permitted"`
-	} `json:"error"`
-}
-
-type NotFoundError struct {
-	Error struct {
-		Code    string `json:"code" example:"not_found"`
-		Message string `json:"message" example:"server not found"`
-	} `json:"error"`
-}
-
-type ConflictError struct {
-	Error struct {
-		Code    string `json:"code" example:"email_exists"`
-		Message string `json:"message" example:"email already registered"`
-	} `json:"error"`
-}
-
-type ValidationError struct {
-	Error struct {
-		Code    string `json:"code" example:"validation_failed"`
-		Message string `json:"message" example:"valid server fields required"`
-	} `json:"error"`
+		Code    string `json:"code" binding:"required"`
+		Message string `json:"message" binding:"required"`
+	} `json:"error" binding:"required"`
 }
 
 type Pagination struct {
@@ -110,13 +67,13 @@ type StatusResponse struct {
 }
 
 type CreateUserResponse struct {
-	ID    uint   `json:"id"`
+	ID    uint   `json:"id,string"`
 	Email string `json:"email"`
 	Role  string `json:"role"`
 }
 
 type UserResponse struct {
-	ID    uint   `json:"id"`
+	ID    uint   `json:"id,string"`
 	Email string `json:"email"`
 	Role  string `json:"role"`
 }
@@ -141,9 +98,9 @@ func User(user *models.User) UserResponse {
 }
 
 type IncidentOverviewResponse struct {
-	Data       []inventory.IncidentRow `json:"data"`
-	Pagination Pagination              `json:"pagination"`
-	Links      Links                   `json:"links"`
+	Data       []models.IncidentRow `json:"data"`
+	Pagination Pagination           `json:"pagination"`
+	Links      Links                `json:"links"`
 }
 
 // UserRecord is the public user model returned by administration operations.
