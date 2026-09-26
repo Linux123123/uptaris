@@ -1,0 +1,202 @@
+import { DeleteResourceDialog } from "@/components/delete-resource-dialog";
+import { SelectFilter } from "@/components/select-filter";
+import { incidentStatusOptions, incidentSeverityOptions } from "@/lib/resource-options";
+import { invalidateInventory } from "@/lib/invalidate-inventory";
+import { DetailCard } from "@/components/detail-card";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { ColumnDef } from "@tanstack/react-table";
+import { ArrowLeft, ShieldAlert, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable } from "@/components/data-table";
+import { IncidentDetailsDialog } from "@/components/incident-details-dialog";
+import { IncidentFormDialog } from "@/components/incident-form-dialog";
+import { MonitorFormDialog } from "@/components/monitor-form-dialog";
+import { PageHeader } from "@/components/page-header";
+import { ErrorState } from "@/components/error-state";
+import { LoadingState } from "@/components/loading-state";
+import { StatusBadge } from "@/components/status-badge";
+import { authStore } from "@/lib/auth-store";
+import { incidentsApi, type Incident } from "@/lib/api";
+import { incidentsQuery, monitorQuery } from "@/lib/queries";
+
+export const Route = createFileRoute("/app/monitors/$monitorId")({
+  params: {
+    parse: (params) => ({ monitorId: z.coerce.number().int().positive().parse(params.monitorId) }),
+  },
+  validateSearch: z.object({
+    serverId: z.coerce.number().int().positive(),
+    page: z.coerce.number().int().positive().catch(1),
+    pageSize: z.coerce.number().int().min(1).max(100).catch(20),
+    status: z.enum(["open", "acknowledged", "resolved"]).optional().catch(undefined),
+    severity: z.enum(["low", "medium", "high", "critical"]).optional().catch(undefined),
+  }),
+  loaderDeps: ({ search }) => search,
+  loader: async ({ context, params, deps }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(monitorQuery(deps.serverId, params.monitorId)),
+      context.queryClient.ensureQueryData(incidentsQuery(deps.serverId, params.monitorId, deps)),
+    ]);
+  },
+  component: MonitorDetailPage,
+});
+
+function MonitorDetailPage() {
+  const { monitorId } = Route.useParams();
+  const search = Route.useSearch();
+  const { serverId } = search;
+  const navigate = Route.useNavigate();
+  const queryClient = useQueryClient();
+  const monitor = useQuery(monitorQuery(serverId, monitorId));
+  const incidents = useQuery(incidentsQuery(serverId, monitorId, search));
+  const canEdit = authStore.state.user?.role !== "viewer";
+  const remove = useMutation({
+    onError: (error) => toast.error(error.message),
+    mutationFn: (id: number) => incidentsApi.remove(serverId, monitorId, id),
+    onSuccess: async () => {
+      await invalidateInventory(queryClient);
+      await queryClient.invalidateQueries({ queryKey: ["incidents", serverId, monitorId] });
+      toast.success("Incident deleted");
+    },
+  });
+  if (monitor.isPending) return <LoadingState label="Loading monitor" />;
+  if (monitor.isError)
+    return <ErrorState message={monitor.error.message} retry={() => void monitor.refetch()} />;
+  const value = monitor.data.data;
+  const columns: ColumnDef<Incident>[] = [
+    {
+      accessorKey: "title",
+      header: "Incident",
+      cell: ({ row }) => (
+        <div>
+          <IncidentDetailsDialog
+            serverId={serverId}
+            monitorId={monitorId}
+            id={row.original.id}
+            title={row.original.title}
+            canEdit={canEdit}
+          />
+          <p className="max-w-md truncate text-xs text-muted-foreground">
+            {row.original.description || "No description"}
+          </p>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "severity",
+      header: "Severity",
+      cell: ({ row }) => <StatusBadge value={row.original.severity} />,
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => <StatusBadge value={row.original.status} />,
+    },
+    {
+      accessorKey: "startedAt",
+      header: "Started",
+      cell: ({ row }) => new Date(row.original.startedAt).toLocaleString(),
+    },
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }) =>
+        canEdit ? (
+          <DeleteResourceDialog
+            trigger={
+              <Button variant="ghost" size="icon-sm" aria-label={`Delete ${row.original.title}`}>
+                <Trash2 />
+              </Button>
+            }
+            title={<>Delete incident?</>}
+            description={<>This removes the incident from active history.</>}
+            actionLabel="Delete incident"
+            onConfirm={() => remove.mutateAsync(row.original.id)}
+          />
+        ) : null,
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <Button
+        nativeButton={false}
+        variant="ghost"
+        size="sm"
+        className="-ml-2"
+        render={
+          <Link
+            to="/app/servers/$serverId"
+            params={{ serverId }}
+            search={{ page: 1, pageSize: 20 }}
+          />
+        }
+      >
+        <ArrowLeft />
+        {`Server #${serverId}`}
+      </Button>
+      <PageHeader
+        title={value.name}
+        description={`${value.type.toUpperCase()} · ${value.target}`}
+        action={canEdit ? <MonitorFormDialog serverId={serverId} monitor={value} /> : undefined}
+      />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <DetailCard label="Status">
+          <StatusBadge value={value.status} />
+        </DetailCard>
+        <DetailCard label="Type">{value.type.toUpperCase()}</DetailCard>
+        <DetailCard label="Interval">{value.intervalSeconds} seconds</DetailCard>
+        <DetailCard label="Expected">{value.expectedHealth}</DetailCard>
+      </div>
+      <Card>
+        <CardHeader className="border-b">
+          <div className="flex items-center justify-between gap-4">
+            <CardTitle className="flex items-center gap-2">
+              <ShieldAlert className="size-4" />
+              Incidents
+            </CardTitle>
+            {canEdit && <IncidentFormDialog serverId={serverId} monitorId={monitorId} />}
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {incidents.isPending ? (
+            <LoadingState />
+          ) : incidents.isError ? (
+            <ErrorState message={incidents.error.message} retry={() => void incidents.refetch()} />
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-2 p-4">
+                <SelectFilter
+                  label="All statuses"
+                  value={search.status}
+                  options={incidentStatusOptions}
+                  onChange={(status) => void navigate({ search: { ...search, page: 1, status } })}
+                />
+                <SelectFilter
+                  label="All severities"
+                  value={search.severity}
+                  options={incidentSeverityOptions}
+                  onChange={(severity) =>
+                    void navigate({ search: { ...search, page: 1, severity } })
+                  }
+                />
+              </div>
+              <DataTable
+                columns={columns}
+                data={incidents.data.data}
+                page={search.page}
+                totalPages={incidents.data.pagination.totalPages}
+                onPageChange={(page) => void navigate({ search: { ...search, page } })}
+                emptyTitle="No incidents"
+                emptyDescription="This monitor has no recorded incidents."
+              />
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

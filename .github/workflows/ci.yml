@@ -22,6 +22,8 @@ jobs:
         working-directory: frontend
       - run: bun run lint
         working-directory: frontend
+      - run: bun audit
+        working-directory: frontend
       - run: bun run build
         working-directory: frontend
 
@@ -38,5 +40,5 @@ jobs:
       - run: go vet ./...
       - run: go install honnef.co/go/tools/cmd/staticcheck@v0.8.1
       - run: "$(go env GOPATH)/bin/staticcheck ./..."
-      - run: go test ./...
+      - run: go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
       - run: go build ./cmd/api

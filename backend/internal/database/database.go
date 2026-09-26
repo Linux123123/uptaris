@@ -1,6 +1,8 @@
 package database
 
 import (
+	"log"
+	"os"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -9,7 +11,12 @@ import (
 )
 
 func Open(dsn string) (*gorm.DB, error) {
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(logger.Warn)})
+	databaseLogger := logger.New(log.New(os.Stderr, "", log.LstdFlags), logger.Config{
+		LogLevel:                  logger.Silent,
+		ParameterizedQueries:      true,
+		IgnoreRecordNotFoundError: true,
+	})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: databaseLogger})
 	if err != nil {
 		return nil, err
 	}

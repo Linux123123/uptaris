@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  Infrastructure monitoring with a calm, clear view of every service.
+  Monitor servers, checks, and incidents in one place.
 </p>
 
 <p align="center">
@@ -15,18 +15,12 @@
 
 ## About
 
-Uptaris is a calm home for monitoring infrastructure. Watch servers and services, spot incidents early, and keep service health in view.
+Uptaris is a web app for managing servers, monitors, and incidents.
 
-## Stack
+## Documentation
 
-- React + Vite frontend
-- Go + Gin REST API
-- PostgreSQL + GORM
-
-## Guides
-
-See English [development guide](docs/development.md) and [production build guide](docs/build.md).
+[Development](docs/development.md) · [Build and deployment](docs/build.md) · [Testing](docs/testing.md) · [Project wiki](https://github.com/Linux123123/uptaris/wiki)
 
 ## License
 
-Licensed under [PolyForm Internal Use License 1.0.0](LICENSE). Distribution is not permitted.
+[PolyForm Internal Use License 1.0.0](LICENSE). Distribution is not permitted.

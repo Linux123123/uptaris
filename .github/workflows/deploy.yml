@@ -1,0 +1,34 @@
+name: production-deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    concurrency: production
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          sparse-checkout: deploy.php
+          sparse-checkout-cone-mode: false
+
+      - name: Set up PHP and Deployer
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          tools: deployer:7.5.12
+          coverage: none
+
+      - name: Deploy backend
+        uses: deployphp/action@v1
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        with:
+          private-key: ${{ secrets.PROD_PRIVATE_KEY }}
+          dep: deploy type=production -o branch=main
+          deployer-binary: /usr/local/bin/deployer

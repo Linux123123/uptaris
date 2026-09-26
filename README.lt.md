@@ -15,18 +15,12 @@
 
 ## Apie projektą
 
-Uptaris - paprasčiausia vieta infrastruktūros stebėjimui. Stebėkite serverius ir paslaugas, anksčiau pastebėkite incidentus ir visada matykite paslaugų būseną.
+Uptaris – internetinė programa serveriams, patikroms ir incidentams valdyti.
 
-## Technologijos
+## Dokumentacija
 
-- React + Vite naudotojo sąsaja
-- Go + Gin REST API
-- PostgreSQL + GORM duomenims
-
-## Instrukcijos
-
-Žr. angliškas [kūrimo](docs/development.md) ir [diegimo](docs/build.md) instrukcijas.
+[Kūrimas](docs/development.md) · [Diegimas](docs/build.md) · [Testavimas](docs/testing.md) (anglų k.) · [Projekto wiki](https://github.com/Linux123123/uptaris/wiki/Home-lt-LT)
 
 ## Licencija
 
-Projektas licencijuojamas pagal [PolyForm Internal Use License 1.0.0](LICENSE). Platinti neleidžiama.
+[PolyForm Internal Use License 1.0.0](LICENSE). Platinti neleidžiama.
