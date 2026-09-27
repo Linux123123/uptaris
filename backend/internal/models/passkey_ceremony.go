@@ -14,4 +14,5 @@ type PasskeyCeremony struct {
 	SessionData json.RawMessage `gorm:"type:jsonb;not null"`
 	ExpiresAt   time.Time
 	ConsumedAt  *time.Time
+	CreatedAt   time.Time
 }

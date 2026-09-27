@@ -20,15 +20,6 @@ CREATE TABLE auth_sessions (
     deleted_at TIMESTAMPTZ
 );
 
-CREATE TABLE revoked_access_tokens (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    token_jti TEXT NOT NULL UNIQUE,
-    expires_at TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    deleted_at TIMESTAMPTZ
-);
-
 CREATE TABLE servers (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     owner_id BIGINT NOT NULL REFERENCES users (id),
@@ -72,8 +63,6 @@ CREATE TABLE incidents (
 );
 
 CREATE INDEX auth_sessions_user_id_idx ON auth_sessions (user_id);
-CREATE INDEX auth_sessions_active_idx ON auth_sessions (refresh_token_hash) WHERE revoked_at IS NULL;
-CREATE INDEX revoked_access_tokens_expiry_idx ON revoked_access_tokens (expires_at);
 CREATE INDEX servers_owner_id_idx ON servers (owner_id);
 CREATE INDEX servers_status_idx ON servers (status);
 CREATE INDEX monitors_server_id_idx ON monitors (server_id);
