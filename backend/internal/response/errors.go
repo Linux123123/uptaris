@@ -28,9 +28,10 @@ func DatabaseError(c *gin.Context, err error) {
 func Error(c *gin.Context, err error) {
 	if accountErr, ok := errors.AsType[*accounts.Error](err); ok {
 		status := 422
-		if accountErr.Code == "password_processing_failed" {
+		switch accountErr.Code {
+		case "password_processing_failed":
 			status = 500
-		} else if accountErr.Code == "invalid_current_password" {
+		case "invalid_current_password":
 			status = 409
 		}
 
