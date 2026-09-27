@@ -15,6 +15,17 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       // shadcn component files intentionally export variants and hooks beside components.
       "react-refresh/only-export-components": "off",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "ImportDeclaration[source.value='react'] > ImportNamespaceSpecifier",
+          message: "Import React hooks and types by name.",
+        },
+        {
+          selector: "MemberExpression[object.name='React'], TSQualifiedName[left.name='React']",
+          message: "Use named React imports instead of React namespace members.",
+        },
+      ],
     },
   },
   {
@@ -24,6 +35,9 @@ export default tseslint.config(
       "padding-line-between-statements": [
         "error",
         { blankLine: "always", prev: "*", next: "return" },
+        { blankLine: "always", prev: "*", next: ["function", "export"] },
+        { blankLine: "always", prev: "*", next: ["if", "for", "while", "switch", "try"] },
+        { blankLine: "always", prev: ["if", "for", "while", "switch", "try"], next: "*" },
         { blankLine: "always", prev: "import", next: "*" },
         { blankLine: "any", prev: "import", next: "import" },
       ],

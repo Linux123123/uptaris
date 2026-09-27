@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+
 export function FilterButton({
   label,
   active,
@@ -8,13 +10,15 @@ export function FilterButton({
   onClick: () => void;
 }) {
   return (
-    <button
+    <Button
       type="button"
       aria-pressed={active}
-      className={`rounded-full border px-3 py-1.5 text-sm capitalize transition-colors ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+      variant={active ? "default" : "outline"}
+      size="sm"
+      className="rounded-full capitalize"
       onClick={onClick}
     >
       {label}
-    </button>
+    </Button>
   );
 }

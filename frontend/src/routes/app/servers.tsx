@@ -6,10 +6,10 @@ import { ChevronRight } from "lucide-react";
 import { z } from "zod";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/data-table";
-import { ErrorState } from "@/components/error-state";
-import { LoadingState } from "@/components/loading-state";
+import { ErrorState } from "@/components/feedback/error-state";
+import { LoadingState } from "@/components/feedback/loading-state";
 import { PageHeader } from "@/components/page-header";
-import { ServerFormDialog } from "@/components/server-form-dialog";
+import { ServerFormDialog } from "@/components/dialogs/server-form-dialog";
 import { StatusBadge } from "@/components/status-badge";
 import { authStore } from "@/lib/auth-store";
 import { serversQuery } from "@/lib/queries";
@@ -21,6 +21,7 @@ const searchSchema = z.object({
   pageSize: z.coerce.number().int().min(10).max(100).catch(paginationDefaults.pageSize),
   status: z.enum(["up", "down", "paused"]).optional().catch(undefined),
 });
+
 export const Route = createFileRoute("/app/servers")({
   validateSearch: searchSchema,
   search: { middlewares: [stripSearchParams(paginationDefaults)] },

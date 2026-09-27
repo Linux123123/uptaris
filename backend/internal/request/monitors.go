@@ -28,18 +28,23 @@ func (input MonitorPatchInput) Apply(value *models.Monitor) {
 	if input.Name != nil {
 		value.Name = *input.Name
 	}
+
 	if input.Type != nil {
 		value.Type = *input.Type
 	}
+
 	if input.Target != nil {
 		value.Target = *input.Target
 	}
+
 	if input.IntervalSeconds != nil {
 		value.IntervalSeconds = *input.IntervalSeconds
 	}
+
 	if input.ExpectedHealth != nil {
 		value.ExpectedHealth = *input.ExpectedHealth
 	}
+
 	if input.Status != nil {
 		value.Status = *input.Status
 	}
@@ -49,5 +54,6 @@ func PrepareMonitor(value *models.Monitor) error {
 	value.Name = strings.TrimSpace(value.Name)
 	value.Target = strings.TrimSpace(value.Target)
 	value.ExpectedHealth = strings.TrimSpace(value.ExpectedHealth)
+
 	return Validate(value)
 }

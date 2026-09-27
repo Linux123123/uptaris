@@ -31,18 +31,21 @@ func (value *Monitor) Update(ctx context.Context, db *gorm.DB, change func(*Moni
 func GetMonitor(ctx context.Context, db *gorm.DB, serverID, id uint) (*Monitor, error) {
 	value := new(Monitor)
 	err := db.WithContext(ctx).Where("server_id = ?", serverID).First(value, id).Error
+
 	return value, err
 }
 
-func ListMonitors(ctx context.Context, db *gorm.DB, serverID uint, page Page, filters Filters) ([]Monitor, int, error) {
+func ListMonitors(ctx context.Context, db *gorm.DB, serverID uint, page, pageSize int, monitorType, status string) ([]Monitor, int, error) {
 	query := db.WithContext(ctx).Where("server_id = ?", serverID)
-	if filters.Status != "" {
-		query = query.Where("status = ?", filters.Status)
+	if status != "" {
+		query = query.Where("status = ?", status)
 	}
-	if filters.Type != "" {
-		query = query.Where("type = ?", filters.Type)
+
+	if monitorType != "" {
+		query = query.Where("type = ?", monitorType)
 	}
-	return listRows[Monitor](query, page, "created_at desc, id desc")
+
+	return listRows[Monitor](query, page, pageSize, "created_at desc, id desc")
 }
 
 func (value *Monitor) Delete(ctx context.Context, db *gorm.DB) error {
@@ -50,6 +53,7 @@ func (value *Monitor) Delete(ctx context.Context, db *gorm.DB) error {
 		if err := tx.Where("monitor_id = ?", value.ID).Delete(&Incident{}).Error; err != nil {
 			return err
 		}
+
 		return tx.Delete(value).Error
 	})
 }

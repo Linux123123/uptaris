@@ -37,37 +37,55 @@ func run(email string, ttl time.Duration) error {
 	if err != nil {
 		return fmt.Errorf("connect to database: %w", err)
 	}
+
 	sqlDB, err := db.DB()
 	if err != nil {
 		return err
 	}
+
 	defer sqlDB.Close()
 
 	var token string
+
 	err = database.Transaction(db, func(tx *gorm.DB) error {
 		var user models.User
+
 		// Serialize issuance with user deletion and role changes, as login does.
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("email = ?", email).First(&user).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return fmt.Errorf("no user with email %q", email)
 			}
+
 			return err
+		}
+
+		var enabled int64
+
+		if err := tx.Model(&models.TwoFactor{}).Where("user_id = ? AND enabled_at IS NOT NULL", user.ID).Count(&enabled).Error; err != nil {
+			return err
+		}
+
+		if enabled > 0 {
+			return errors.New("two-factor authentication enabled; use normal sign-in")
 		}
 
 		refresh, err := auth.NewRefresh()
 		if err != nil {
 			return err
 		}
+
 		session := models.AuthSession{
 			UserID:           user.ID,
 			RefreshTokenHash: auth.HashRefresh(refresh, cfg.RefreshTokenPepper),
 			ExpiresAt:        time.Now().Add(ttl),
 		}
+
 		if err := tx.Create(&session).Error; err != nil {
 			return err
 		}
 
 		token, _, err = auth.Issue(uint64(user.ID), session.ID, user.Role, cfg.JWTAccessSecret, ttl)
+
 		return err
 	})
 	if err != nil {
@@ -75,5 +93,6 @@ func run(email string, ttl time.Duration) error {
 	}
 
 	_, err = fmt.Fprintln(os.Stdout, token)
+
 	return err
 }

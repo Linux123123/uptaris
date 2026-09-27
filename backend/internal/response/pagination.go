@@ -12,15 +12,19 @@ func links(c *gin.Context, pageNumber, pageSize, total int) gin.H {
 	values.Set("page", strconv.Itoa(pageNumber))
 	values.Set("pageSize", strconv.Itoa(pageSize))
 	self := c.Request.URL.Path + "?" + values.Encode()
+
 	var next, prev any
+
 	if pageNumber < pages {
 		values.Set("page", strconv.Itoa(pageNumber+1))
 		next = c.Request.URL.Path + "?" + values.Encode()
 	}
+
 	if pageNumber > 1 {
 		values.Set("page", strconv.Itoa(pageNumber-1))
 		prev = c.Request.URL.Path + "?" + values.Encode()
 	}
+
 	return gin.H{"self": self, "next": next, "previous": prev}
 }
 

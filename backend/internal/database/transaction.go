@@ -10,5 +10,6 @@ func Transaction(db *gorm.DB, fn func(tx *gorm.DB) error) error {
 	if cockroach, _ := db.Get("uptaris:cockroachdb"); cockroach == true {
 		return crdbgorm.ExecuteTx(db.Statement.Context, db, nil, fn)
 	}
+
 	return db.Transaction(fn)
 }

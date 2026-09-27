@@ -29,18 +29,23 @@ func (input IncidentPatchInput) Apply(value *models.Incident) {
 	if input.Title != nil {
 		value.Title = *input.Title
 	}
+
 	if input.Description != nil {
 		value.Description = *input.Description
 	}
+
 	if input.Severity != nil {
 		value.Severity = *input.Severity
 	}
+
 	if input.Status != nil {
 		value.Status = *input.Status
 	}
+
 	if input.StartedAt != nil {
 		value.StartedAt = *input.StartedAt
 	}
+
 	if input.ResolvedAt != nil {
 		value.ResolvedAt = input.ResolvedAt
 	}
@@ -54,5 +59,6 @@ func PrepareIncident(value *models.Incident) error {
 		now := time.Now()
 		value.ResolvedAt = &now
 	}
+
 	return Validate(value)
 }

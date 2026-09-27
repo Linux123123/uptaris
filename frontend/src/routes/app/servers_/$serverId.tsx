@@ -7,14 +7,14 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/data-table";
-import { DeleteResourceDialog } from "@/components/delete-resource-dialog";
+import { DeleteResourceDialog } from "@/components/dialogs/delete-resource-dialog";
 import { DetailCard } from "@/components/detail-card";
-import { ErrorState } from "@/components/error-state";
-import { LoadingState } from "@/components/loading-state";
-import { MonitorFormDialog } from "@/components/monitor-form-dialog";
+import { ErrorState } from "@/components/feedback/error-state";
+import { LoadingState } from "@/components/feedback/loading-state";
+import { MonitorFormDialog } from "@/components/dialogs/monitor-form-dialog";
 import { PageHeader } from "@/components/page-header";
 import { SelectFilter } from "@/components/select-filter";
-import { ServerFormDialog } from "@/components/server-form-dialog";
+import { ServerFormDialog } from "@/components/dialogs/server-form-dialog";
 import { StatusBadge } from "@/components/status-badge";
 import { authStore } from "@/lib/auth-store";
 import { monitorsApi, serversApi, type Monitor } from "@/lib/api";
@@ -71,9 +71,12 @@ function ServerDetailPage() {
       toast.success("Monitor deleted");
     },
   });
+
   if (server.isPending) return <LoadingState label="Loading server" />;
+
   if (server.isError)
     return <ErrorState message={server.error.message} retry={() => void server.refetch()} />;
+
   const value = server.data.data;
   const columns: ColumnDef<Monitor>[] = [
     {

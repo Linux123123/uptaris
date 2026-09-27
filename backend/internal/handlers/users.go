@@ -26,15 +26,18 @@ func (h *Handlers) Users(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	page, size, ok := request.Page(c)
 	if !ok {
 		return
 	}
+
 	rows, total, err := h.users.List(c.Request.Context(), page, size)
 	if err != nil {
 		response.Error(c, err)
 		return
 	}
+
 	response.List(c, rows, total, page, size)
 }
 
@@ -63,21 +66,27 @@ func (h *Handlers) UpdateUserRole(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	id, ok := request.ID(c, "userId")
 	if !ok {
 		return
 	}
+
 	var input request.UserRoleInput
+
 	if !request.JSON(c, &input) {
 		return
 	}
+
 	if !request.Valid(c, request.Validate(&input)) {
 		return
 	}
+
 	user, err := h.users.ChangeRole(c.Request.Context(), identity, id, input.Role)
 	if !response.ResourceError(c, err, "user") {
 		return
 	}
+
 	c.JSON(200, user)
 }
 
@@ -102,12 +111,15 @@ func (h *Handlers) DeleteUser(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	id, ok := request.ID(c, "userId")
 	if !ok {
 		return
 	}
+
 	if !response.ResourceError(c, h.users.Delete(c.Request.Context(), identity, id), "user") {
 		return
 	}
+
 	c.Status(204)
 }

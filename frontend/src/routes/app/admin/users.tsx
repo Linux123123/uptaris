@@ -1,4 +1,4 @@
-import { DeleteResourceDialog } from "@/components/delete-resource-dialog";
+import { DeleteResourceDialog } from "@/components/dialogs/delete-resource-dialog";
 import { createFileRoute, redirect, stripSearchParams } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/data-table";
 import { PageHeader } from "@/components/page-header";
-import { ErrorState } from "@/components/error-state";
-import { LoadingState } from "@/components/loading-state";
+import { ErrorState } from "@/components/feedback/error-state";
+import { LoadingState } from "@/components/feedback/loading-state";
 import {
   Select,
   SelectContent,

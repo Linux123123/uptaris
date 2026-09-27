@@ -26,15 +26,19 @@ func (input ServerPatchInput) Apply(value *models.Server) {
 	if input.Name != nil {
 		value.Name = *input.Name
 	}
+
 	if input.Address != nil {
 		value.Address = *input.Address
 	}
+
 	if input.OperatingSystem != nil {
 		value.OperatingSystem = *input.OperatingSystem
 	}
+
 	if input.Description != nil {
 		value.Description = *input.Description
 	}
+
 	if input.Status != nil {
 		value.Status = *input.Status
 	}
@@ -44,5 +48,6 @@ func PrepareServer(value *models.Server) error {
 	value.Name = strings.TrimSpace(value.Name)
 	value.Address = strings.TrimSpace(value.Address)
 	value.OperatingSystem = strings.TrimSpace(value.OperatingSystem)
+
 	return Validate(value)
 }

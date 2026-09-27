@@ -25,17 +25,19 @@ func Configure(cfg config.Config, httpHandlers *handlers.Handlers, logger *slog.
 	if err := engine.SetTrustedProxies(cfg.TrustedProxies); err != nil {
 		panic(err)
 	}
+
 	engine.HandleMethodNotAllowed = true
 	engine.Use(middleware.RequestLogger(logger), middleware.Recovery())
 	if cfg.SentryDSN != "" {
 		engine.Use(sentrygin.New(sentrygin.Options{Repanic: true}))
 	}
+
 	engine.Use(middleware.Security(cfg))
 	engine.NoRoute(handlers.NotFound)
 	engine.NoMethod(handlers.MethodNotAllowed)
 	engine.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.CORSOrigins,
-		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodDelete, http.MethodOptions},
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodOptions},
 		AllowHeaders:     []string{"Authorization", "Content-Type", "X-Request-ID"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
@@ -47,10 +49,13 @@ func Configure(cfg config.Config, httpHandlers *handlers.Handlers, logger *slog.
 	v1 := engine.Group("/api/v1")
 	v1.Use(middleware.RequireJSON())
 	registerRoutes(v1, httpHandlers)
+
 	return engine
 }
+
 func registerRoutes(v1 *gin.RouterGroup, api *handlers.Handlers) {
 	registerAuth(v1, api)
+	registerAccounts(v1, api)
 	registerSystem(v1, api)
 	registerServers(v1, api)
 	registerMonitors(v1, api)

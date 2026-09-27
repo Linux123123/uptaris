@@ -34,23 +34,27 @@ func (h *Handlers) Incidents(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	pageNumber, pageSize, ok := request.Page(c)
 	if !ok {
 		return
 	}
-	filters := models.Filters{}
-	filters.Severity, ok = request.Filter(c, "severity", "low", "medium", "high", "critical")
+
+	severity, ok := request.Filter(c, "severity", "low", "medium", "high", "critical")
 	if !ok {
 		return
 	}
-	filters.Status, ok = request.Filter(c, "status", "open", "acknowledged", "resolved")
+
+	status, ok := request.Filter(c, "status", "open", "acknowledged", "resolved")
 	if !ok {
 		return
 	}
-	rows, total, err := models.ListIncidents(c.Request.Context(), h.db, monitor.ID, models.Page{Number: pageNumber, Size: pageSize}, filters)
+
+	rows, total, err := models.ListIncidents(c.Request.Context(), h.db, monitor.ID, pageNumber, pageSize, status, severity)
 	if !response.ResourceError(c, err, "incident") {
 		return
 	}
+
 	response.List(c, rows, total, pageNumber, pageSize)
 }
 
@@ -79,18 +83,23 @@ func (h *Handlers) CreateIncident(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	if currentActor.Role == "viewer" {
 		response.Fail(c, 403, "forbidden", "viewer is read only")
 		return
 	}
+
 	var input request.IncidentInput
+
 	if !request.JSON(c, &input) {
 		return
 	}
+
 	started := time.Now()
 	if input.StartedAt != nil {
 		started = *input.StartedAt
 	}
+
 	incident := models.Incident{
 		MonitorID:   monitor.ID,
 		Title:       input.Title,
@@ -100,13 +109,16 @@ func (h *Handlers) CreateIncident(c *gin.Context) {
 		StartedAt:   started,
 		ResolvedAt:  input.ResolvedAt,
 	}
+
 	if !request.Valid(c, request.PrepareIncident(&incident)) {
 		return
 	}
+
 	if err := incident.Create(c.Request.Context(), h.db); err != nil {
 		response.Error(c, err)
 		return
 	}
+
 	c.Header("Location", c.Request.URL.Path+"/"+strconv.FormatUint(uint64(incident.ID), 10))
 	c.JSON(201, incident)
 }
@@ -116,14 +128,17 @@ func (h *Handlers) oneIncident(c *gin.Context) (auth.Identity, *models.Incident,
 	if !ok {
 		return currentActor, nil, false
 	}
+
 	iid, ok := request.ID(c, "incidentId")
 	if !ok {
 		return currentActor, nil, false
 	}
+
 	incident, err := models.GetIncident(c.Request.Context(), h.db, monitor.ID, iid)
 	if !response.ResourceError(c, err, "incident") {
 		return currentActor, nil, false
 	}
+
 	return currentActor, incident, true
 }
 
@@ -174,22 +189,27 @@ func (h *Handlers) UpdateIncident(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	if currentActor.Role == "viewer" {
 		response.Fail(c, 403, "forbidden", "viewer is read only")
 		return
 	}
+
 	var input request.IncidentPatchInput
+
 	if !request.JSON(c, &input) {
 		return
 	}
 
 	err := incident.Update(c.Request.Context(), h.db, func(value *models.Incident) error {
 		input.Apply(value)
+
 		return request.PrepareIncident(value)
 	})
 	if !response.ResourceError(c, err, "incident") {
 		return
 	}
+
 	c.JSON(200, incident)
 }
 
@@ -215,13 +235,16 @@ func (h *Handlers) DeleteIncident(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	if currentActor.Role == "viewer" {
 		response.Fail(c, 403, "forbidden", "viewer is read only")
 		return
 	}
+
 	if err := incident.Delete(c.Request.Context(), h.db); err != nil {
 		response.Error(c, err)
 		return
 	}
+
 	c.Status(204)
 }

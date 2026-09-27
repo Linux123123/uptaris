@@ -24,6 +24,7 @@ func (readOnlySwaggerFS) OpenFile(_ context.Context, name string, _ int, _ os.Fi
 	if err != nil {
 		return nil, err
 	}
+
 	return readOnlySwaggerFile{File: file}, nil
 }
 

@@ -7,13 +7,13 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/data-table";
-import { DeleteResourceDialog } from "@/components/delete-resource-dialog";
+import { DeleteResourceDialog } from "@/components/dialogs/delete-resource-dialog";
 import { DetailCard } from "@/components/detail-card";
-import { ErrorState } from "@/components/error-state";
-import { IncidentDetailsDialog } from "@/components/incident-details-dialog";
-import { IncidentFormDialog } from "@/components/incident-form-dialog";
-import { LoadingState } from "@/components/loading-state";
-import { MonitorFormDialog } from "@/components/monitor-form-dialog";
+import { ErrorState } from "@/components/feedback/error-state";
+import { IncidentDetailsDialog } from "@/components/dialogs/incident-details-dialog";
+import { IncidentFormDialog } from "@/components/dialogs/incident-form-dialog";
+import { LoadingState } from "@/components/feedback/loading-state";
+import { MonitorFormDialog } from "@/components/dialogs/monitor-form-dialog";
 import { PageHeader } from "@/components/page-header";
 import { SelectFilter } from "@/components/select-filter";
 import { StatusBadge } from "@/components/status-badge";
@@ -67,9 +67,12 @@ function MonitorDetailPage() {
       toast.success("Incident deleted");
     },
   });
+
   if (monitor.isPending) return <LoadingState label="Loading monitor" />;
+
   if (monitor.isError)
     return <ErrorState message={monitor.error.message} retry={() => void monitor.refetch()} />;
+
   const value = monitor.data.data;
   const columns: ColumnDef<Incident>[] = [
     {

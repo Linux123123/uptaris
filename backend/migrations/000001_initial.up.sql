@@ -1,7 +1,8 @@
 CREATE TABLE users (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
+    password_hash TEXT,
+    webauthn_handle BYTEA UNIQUE,
     role TEXT NOT NULL DEFAULT 'viewer' CHECK (role IN ('viewer', 'operator', 'admin')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -81,3 +82,104 @@ CREATE INDEX monitors_status_idx ON monitors (status);
 CREATE INDEX incidents_monitor_id_idx ON incidents (monitor_id);
 CREATE INDEX incidents_severity_idx ON incidents (severity);
 CREATE INDEX incidents_status_idx ON incidents (status);
+
+CREATE TABLE oauth_identities (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    provider TEXT NOT NULL,
+    provider_user_id TEXT NOT NULL,
+    access_token_ciphertext BYTEA NOT NULL,
+    refresh_token_ciphertext BYTEA,
+    access_token_expires_at TIMESTAMPTZ,
+    refresh_token_expires_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    deleted_at TIMESTAMPTZ,
+    CONSTRAINT oauth_identities_provider_identity_unique UNIQUE (provider, provider_user_id),
+    CONSTRAINT oauth_identities_user_provider_unique UNIQUE (user_id, provider)
+);
+
+CREATE TABLE oauth_states (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    state_hash TEXT NOT NULL UNIQUE,
+    provider TEXT NOT NULL,
+    intent TEXT NOT NULL CHECK (intent IN ('login', 'link')),
+    user_id BIGINT REFERENCES users (id) ON DELETE CASCADE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    consumed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    deleted_at TIMESTAMPTZ,
+    CHECK ((intent = 'login' AND user_id IS NULL) OR (intent = 'link' AND user_id IS NOT NULL))
+);
+
+CREATE INDEX oauth_states_expiry_idx ON oauth_states (expires_at);
+
+CREATE TABLE two_factors (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL UNIQUE REFERENCES users (id) ON DELETE CASCADE,
+    secret_ciphertext BYTEA NOT NULL,
+    enabled_at TIMESTAMPTZ,
+    expires_at TIMESTAMPTZ NOT NULL,
+    failed_attempts INT NOT NULL DEFAULT 0 CHECK (failed_attempts BETWEEN 0 AND 5),
+    locked_until TIMESTAMPTZ,
+    last_used_step BIGINT NOT NULL DEFAULT -1,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    deleted_at TIMESTAMPTZ
+);
+
+CREATE TABLE two_factor_challenges (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL UNIQUE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    attempts INT NOT NULL DEFAULT 0 CHECK (attempts BETWEEN 0 AND 5),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    deleted_at TIMESTAMPTZ
+);
+
+CREATE INDEX two_factor_challenges_expiry_idx ON two_factor_challenges (expires_at);
+CREATE INDEX two_factor_challenges_user_idx ON two_factor_challenges (user_id);
+
+CREATE TABLE two_factor_backup_codes (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    code_hash TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    deleted_at TIMESTAMPTZ
+);
+
+CREATE INDEX two_factor_backup_codes_user_idx ON two_factor_backup_codes (user_id);
+
+CREATE TABLE passkeys (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    rp_id TEXT NOT NULL,
+    credential_id BYTEA NOT NULL UNIQUE,
+    credential JSONB NOT NULL,
+    name TEXT NOT NULL,
+    last_used_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX passkeys_user_id_idx ON passkeys (user_id);
+
+CREATE TABLE passkey_ceremonies (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    token_hash TEXT NOT NULL UNIQUE,
+    kind TEXT NOT NULL CHECK (kind IN ('login', 'register')),
+    user_id BIGINT REFERENCES users (id) ON DELETE CASCADE,
+    session_id BIGINT REFERENCES auth_sessions (id) ON DELETE CASCADE,
+    session_data JSONB NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    consumed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK ((kind = 'login' AND user_id IS NULL AND session_id IS NULL) OR
+           (kind = 'register' AND user_id IS NOT NULL AND session_id IS NOT NULL))
+);
+
+CREATE INDEX passkey_ceremonies_expiry_idx ON passkey_ceremonies (expires_at);

@@ -11,6 +11,7 @@ const ReactQueryDevtools = import.meta.env.DEV
       })),
     )
   : null;
+
 export function AppProviders({ children }: { children: ReactNode }) {
   useEffect(() => {
     void restoreSession().then((user) => (user ? setAuthenticated(user) : setAnonymous()));

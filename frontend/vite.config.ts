@@ -10,16 +10,5 @@ export default defineConfig({
   resolve: {
     alias: { "@": path.resolve(import.meta.dirname, "./src") },
   },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (!id.includes("node_modules")) return;
-          if (id.includes("@tanstack")) return "vendor-tanstack";
-          if (id.includes("zod")) return "vendor-validation";
-        },
-      },
-    },
-  },
   server: { port: 5173 },
 });

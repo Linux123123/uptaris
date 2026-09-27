@@ -29,18 +29,21 @@ func (value *Incident) Update(ctx context.Context, db *gorm.DB, change func(*Inc
 func GetIncident(ctx context.Context, db *gorm.DB, monitorID, id uint) (*Incident, error) {
 	value := new(Incident)
 	err := db.WithContext(ctx).Where("monitor_id = ?", monitorID).First(value, id).Error
+
 	return value, err
 }
 
-func ListIncidents(ctx context.Context, db *gorm.DB, monitorID uint, page Page, filters Filters) ([]Incident, int, error) {
+func ListIncidents(ctx context.Context, db *gorm.DB, monitorID uint, page, pageSize int, status, severity string) ([]Incident, int, error) {
 	query := db.WithContext(ctx).Where("monitor_id = ?", monitorID)
-	if filters.Status != "" {
-		query = query.Where("status = ?", filters.Status)
+	if status != "" {
+		query = query.Where("status = ?", status)
 	}
-	if filters.Severity != "" {
-		query = query.Where("severity = ?", filters.Severity)
+
+	if severity != "" {
+		query = query.Where("severity = ?", severity)
 	}
-	return listRows[Incident](query, page, "started_at desc, id desc")
+
+	return listRows[Incident](query, page, pageSize, "started_at desc, id desc")
 }
 
 func (value *Incident) Delete(ctx context.Context, db *gorm.DB) error {

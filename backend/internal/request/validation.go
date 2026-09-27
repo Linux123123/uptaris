@@ -32,9 +32,11 @@ func newValidator() *validator.Validate {
 		if name == "-" {
 			return ""
 		}
+
 		if name != "" {
 			return name
 		}
+
 		return field.Name
 	})
 	check.RegisterStructValidation(func(level validator.StructLevel) {
@@ -43,6 +45,7 @@ func newValidator() *validator.Validate {
 			level.ReportError(incident.ResolvedAt, "resolvedAt", "ResolvedAt", "gtefield", "startedAt")
 		}
 	}, models.Incident{})
+
 	return check
 }
 
@@ -53,6 +56,7 @@ func newTranslator(check *validator.Validate) ut.Translator {
 	if err := translations.RegisterDefaultTranslations(check, translate); err != nil {
 		panic(err)
 	}
+
 	return translate
 }
 
@@ -61,13 +65,16 @@ func Validate(value any) error {
 	if err == nil {
 		return nil
 	}
+
 	fields, ok := err.(validator.ValidationErrors)
 	if !ok {
 		return err
 	}
+
 	issues := make([]string, 0, len(fields))
 	for _, field := range fields {
 		issues = append(issues, field.Translate(translator))
 	}
+
 	return &ValidationError{Issues: issues}
 }

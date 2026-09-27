@@ -19,7 +19,7 @@ Uptaris – internetinė programa serveriams, patikroms ir incidentams valdyti.
 
 ## Dokumentacija
 
-[Kūrimas](docs/development.md) · [Diegimas](docs/build.md) · [Testavimas](docs/testing.md) (anglų k.) · [Projekto wiki](https://github.com/Linux123123/uptaris/wiki/Home-lt-LT)
+[Kūrimas](docs/development.md) · [Diegimas](docs/build.md) · [Projekto wiki](https://github.com/Linux123123/uptaris/wiki/Home-lt-LT)
 
 ## Licencija
 

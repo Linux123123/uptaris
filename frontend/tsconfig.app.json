@@ -20,8 +20,8 @@
     "allowImportingTsExtensions": false,
     "verbatimModuleSyntax": true,
     "noEmit": true,
-    "jsx": "react-jsx",
-    "paths": { "@/*": ["./src/*"] }
+    "jsx": "react-jsx"
   },
-  "include": ["src"]
+  "include": ["src"],
+  "extends": "./tsconfig.json"
 }

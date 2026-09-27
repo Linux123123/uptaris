@@ -15,11 +15,13 @@ func RequireJSON() gin.HandlerFunc {
 		if c.Request.ContentLength == 0 {
 			return
 		}
+
 		mediaType, _, err := mime.ParseMediaType(c.GetHeader("Content-Type"))
 		if err != nil || mediaType != "application/json" {
 			response.Fail(c, http.StatusUnsupportedMediaType, "unsupported_media_type", "Content-Type must be application/json")
 			return
 		}
+
 		c.Next()
 	}
 }
@@ -36,10 +38,12 @@ func Security(cfg config.Config) gin.HandlerFunc {
 				return
 			}
 		}
+
 		if c.Request.ContentLength > 64<<10 {
 			response.Fail(c, 413, "body_too_large", "request body exceeds 64 KiB")
 			return
 		}
+
 		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 64<<10)
 		c.Next()
 	}

@@ -1,6 +1,26 @@
 components:
   schemas:
-    github_com_uptaris_uptaris_backend_internal_models.Incident:
+    github_com_uptaris_uptaris_backend_internal_accounts.ProviderConnection:
+      properties:
+        available:
+          type: boolean
+        connected:
+          type: boolean
+        id:
+          type: string
+        name:
+          type: string
+      type: object
+    github_com_uptaris_uptaris_backend_internal_auth.OAuthProviderInfo:
+      properties:
+        id:
+          type: string
+        loginUrl:
+          type: string
+        name:
+          type: string
+      type: object
+    github_com_uptaris_uptaris_backend_internal_inventory.IncidentRow:
       properties:
         createdAt:
           type: string
@@ -13,7 +33,12 @@ components:
         monitorId:
           example: "0"
           type: string
+        monitorName:
+          type: string
         resolvedAt:
+          type: string
+        serverId:
+          example: "0"
           type: string
         severity:
           enum:
@@ -41,7 +66,7 @@ components:
       - status
       - title
       type: object
-    github_com_uptaris_uptaris_backend_internal_models.IncidentRow:
+    github_com_uptaris_uptaris_backend_internal_models.Incident:
       properties:
         createdAt:
           type: string
@@ -54,12 +79,7 @@ components:
         monitorId:
           example: "0"
           type: string
-        monitorName:
-          type: string
         resolvedAt:
-          type: string
-        serverId:
-          example: "0"
           type: string
         severity:
           enum:
@@ -190,7 +210,7 @@ components:
           maxLength: 254
           type: string
         password:
-          example: example-password-2026
+          example: UptarisDemo!2026
           maxLength: 128
           minLength: 8
           type: string
@@ -339,6 +359,27 @@ components:
           example: http
           type: string
       type: object
+    github_com_uptaris_uptaris_backend_internal_request.PasskeyVerification:
+      properties:
+        ceremonyToken:
+          type: string
+        credential:
+          type: object
+        name:
+          type: string
+      type: object
+    github_com_uptaris_uptaris_backend_internal_request.PasswordChange:
+      properties:
+        currentPassword:
+          maxLength: 128
+          type: string
+        newPassword:
+          maxLength: 128
+          minLength: 8
+          type: string
+      required:
+      - newPassword
+      type: object
     github_com_uptaris_uptaris_backend_internal_request.ServerInput:
       properties:
         address:
@@ -395,6 +436,35 @@ components:
           example: up
           type: string
       type: object
+    github_com_uptaris_uptaris_backend_internal_request.TwoFactorManagement:
+      properties:
+        backupCode:
+          type: boolean
+        code:
+          maxLength: 32
+          type: string
+        currentPassword:
+          maxLength: 128
+          type: string
+      required:
+      - code
+      type: object
+    github_com_uptaris_uptaris_backend_internal_request.TwoFactorSetup:
+      properties:
+        currentPassword:
+          maxLength: 128
+          type: string
+      type: object
+    github_com_uptaris_uptaris_backend_internal_request.TwoFactorVerification:
+      properties:
+        backupCode:
+          type: boolean
+        code:
+          maxLength: 32
+          type: string
+      required:
+      - code
+      type: object
     github_com_uptaris_uptaris_backend_internal_request.UserRoleInput:
       properties:
         role:
@@ -407,12 +477,36 @@ components:
       required:
       - role
       type: object
+    github_com_uptaris_uptaris_backend_internal_response.AccountSettingsResponse:
+      properties:
+        backupCodesRemaining:
+          type: integer
+        email:
+          type: string
+        hasPassword:
+          type: boolean
+        providers:
+          items:
+            $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_accounts.ProviderConnection'
+          type: array
+          uniqueItems: false
+        twoFactorEnabled:
+          type: boolean
+      type: object
     github_com_uptaris_uptaris_backend_internal_response.AuthResponse:
       properties:
         accessToken:
           type: string
         user:
           $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UserResponse'
+      type: object
+    github_com_uptaris_uptaris_backend_internal_response.BackupCodesResponse:
+      properties:
+        backupCodes:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
       type: object
     github_com_uptaris_uptaris_backend_internal_response.CreateUserResponse:
       properties:
@@ -464,7 +558,7 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_models.IncidentRow'
+            $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_inventory.IncidentRow'
           type: array
           uniqueItems: false
         links:
@@ -526,6 +620,23 @@ components:
           example: 1
           type: integer
       type: object
+    github_com_uptaris_uptaris_backend_internal_response.PasskeyOptionsResponse:
+      properties:
+        ceremonyToken:
+          type: string
+        optionsJSON: {}
+      type: object
+    github_com_uptaris_uptaris_backend_internal_response.PasskeyResponse:
+      properties:
+        createdAt:
+          type: string
+        id:
+          type: string
+        lastUsedAt:
+          type: string
+        name:
+          type: string
+      type: object
     github_com_uptaris_uptaris_backend_internal_response.ServerListResponse:
       properties:
         data:
@@ -547,6 +658,15 @@ components:
         data:
           $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_models.Server'
       type: object
+    github_com_uptaris_uptaris_backend_internal_response.SignInResponse:
+      properties:
+        accessToken:
+          type: string
+        twoFactorRequired:
+          type: boolean
+        user:
+          $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.UserResponse'
+      type: object
     github_com_uptaris_uptaris_backend_internal_response.StatusResponse:
       properties:
         monitors:
@@ -555,6 +675,15 @@ components:
           type: integer
         servers:
           type: integer
+      type: object
+    github_com_uptaris_uptaris_backend_internal_response.TwoFactorEnrollmentResponse:
+      properties:
+        expiresAt:
+          type: string
+        secret:
+          type: string
+        uri:
+          type: string
       type: object
     github_com_uptaris_uptaris_backend_internal_response.UserListResponse:
       properties:
@@ -606,6 +735,234 @@ info:
   version: 0.1.0
 openapi: 3.1.0
 paths:
+  /account:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.AccountSettingsResponse'
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: Unauthorized
+      security:
+      - bearerauth: []
+      summary: Get account sign-in settings
+      tags:
+      - account
+  /account/passkeys:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.PasskeyResponse'
+                type: array
+          description: OK
+      security:
+      - bearerauth: []
+      summary: List account passkeys
+      tags:
+      - account
+  /account/passkeys/{id}:
+    delete:
+      parameters:
+      - description: Passkey ID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+      responses:
+        "204":
+          description: No Content
+      security:
+      - bearerauth: []
+      summary: Remove account passkey
+      tags:
+      - account
+  /account/passkeys/options:
+    post:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.PasskeyOptionsResponse'
+          description: OK
+      security:
+      - bearerauth: []
+      summary: Begin passkey enrollment
+      tags:
+      - account
+  /account/passkeys/verify:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_request.PasskeyVerification'
+        description: Passkey attestation and one-time ceremony token
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.PasskeyResponse'
+          description: Created
+      security:
+      - bearerauth: []
+      summary: Finish passkey enrollment
+      tags:
+      - account
+  /account/password:
+    put:
+      description: Current password required when account already has password. Setting
+        first password adds another sign-in method.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_request.PasswordChange'
+        description: Current password and new password
+        required: true
+      responses:
+        "204":
+          description: No Content
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: invalid_current_password
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: 'validation_failed: password policy requirements not met'
+      security:
+      - bearerauth: []
+      summary: Set or change account password
+      tags:
+      - account
+  /account/two-factor/backup-codes:
+    post:
+      description: Invalidates all previous backup codes; returns ten new codes once.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_request.TwoFactorManagement'
+        description: Current password (if present) and second factor
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BackupCodesResponse'
+          description: OK
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: Unprocessable Entity
+      security:
+      - bearerauth: []
+      summary: Refresh backup codes
+      tags:
+      - account
+  /account/two-factor/confirm:
+    post:
+      description: Activates 2FA and revokes other sessions. Returns ten backup codes
+        once; store them safely.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_request.TwoFactorVerification'
+        description: Authenticator code (backupCode must be false)
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.BackupCodesResponse'
+          description: OK
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: Unprocessable Entity
+      security:
+      - bearerauth: []
+      summary: Confirm authenticator enrollment
+      tags:
+      - account
+  /account/two-factor/disable:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_request.TwoFactorManagement'
+        description: Current password (if present) and second factor
+        required: true
+      responses:
+        "204":
+          description: No Content
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: Unprocessable Entity
+      security:
+      - bearerauth: []
+      summary: Disable two-factor authentication
+      tags:
+      - account
+  /account/two-factor/setup:
+    post:
+      description: Current password required when account has a password. Secret and
+        otpauth URI expire after ten minutes; QR generated locally by frontend.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_request.TwoFactorSetup'
+        description: Current password
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.TwoFactorEnrollmentResponse'
+          description: OK
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: Conflict
+      security:
+      - bearerauth: []
+      summary: Start authenticator enrollment
+      tags:
+      - account
   /admin/users:
     get:
       parameters:
@@ -837,6 +1194,9 @@ paths:
       - admin
   /auth/login:
     post:
+      description: Returns accessToken and refresh cookie, or {"twoFactorRequired":true}
+        and HttpOnly challenge cookie when 2FA is enabled. Complete /auth/two-factor/verify
+        before using authenticated routes.
       requestBody:
         content:
           application/json:
@@ -849,7 +1209,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.AuthResponse'
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.SignInResponse'
           description: OK
           headers:
             Set-Cookie:
@@ -1009,6 +1369,162 @@ paths:
       summary: Get authenticated user
       tags:
       - auth
+  /auth/oauth/{provider}:
+    get:
+      parameters:
+      - description: OAuth provider ID
+        in: path
+        name: provider
+        required: true
+        schema:
+          type: string
+      responses:
+        "302":
+          description: Redirect to provider authorization
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: Service Unavailable
+      summary: Start OAuth sign-in
+      tags:
+      - auth
+  /auth/oauth/{provider}/callback:
+    get:
+      parameters:
+      - description: OAuth provider ID
+        in: path
+        name: provider
+        required: true
+        schema:
+          type: string
+      - description: Provider authorization code
+        in: query
+        name: code
+        required: true
+        schema:
+          type: string
+      - description: One-time state value
+        in: query
+        name: state
+        required: true
+        schema:
+          type: string
+      responses:
+        "302":
+          description: Redirect to app
+      summary: Complete OAuth sign-in or connection
+      tags:
+      - auth
+  /auth/oauth/{provider}/link:
+    delete:
+      parameters:
+      - description: OAuth provider ID
+        in: path
+        name: provider
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: Unauthorized
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: last_signin_method
+      security:
+      - bearerauth: []
+      summary: Disconnect OAuth provider
+      tags:
+      - auth
+    post:
+      parameters:
+      - description: OAuth provider ID
+        in: path
+        name: provider
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: Unauthorized
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: Service Unavailable
+      security:
+      - bearerauth: []
+      summary: Start authenticated OAuth connection
+      tags:
+      - auth
+  /auth/passkeys/login/options:
+    post:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.PasskeyOptionsResponse'
+          description: OK
+      summary: Begin passkey sign-in
+      tags:
+      - auth
+  /auth/passkeys/login/verify:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_request.PasskeyVerification'
+        description: Passkey assertion and one-time ceremony token
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.AuthResponse'
+          description: OK
+      summary: Finish passkey sign-in
+      tags:
+      - auth
+  /auth/providers:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_auth.OAuthProviderInfo'
+                type: array
+          description: OK
+      summary: List configured OAuth providers
+      tags:
+      - auth
   /auth/refresh:
     post:
       description: Requires uptaris_refresh HttpOnly cookie from login or previous
@@ -1072,7 +1588,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_request.Credentials'
-        description: Email and password
+        description: Email and new password
         required: true
       responses:
         "201":
@@ -1146,6 +1662,48 @@ paths:
                 $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
           description: 'service_unavailable: database operation failed'
       summary: Register account
+      tags:
+      - auth
+  /auth/two-factor/cancel:
+    post:
+      responses:
+        "204":
+          description: No Content
+      summary: Cancel pending two-factor sign-in
+      tags:
+      - auth
+  /auth/two-factor/verify:
+    post:
+      description: Requires short-lived HttpOnly uptaris_two_factor cookie from password
+        or OAuth sign-in. Accepts authenticator or single-use backup code. Five attempts
+        maximum.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_request.TwoFactorVerification'
+        description: Second factor
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.AuthResponse'
+          description: OK
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: Unprocessable Entity
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/github_com_uptaris_uptaris_backend_internal_response.ErrorResponse'
+          description: Too Many Requests
+      summary: Complete two-factor sign-in
       tags:
       - auth
   /dashboard:

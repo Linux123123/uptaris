@@ -133,8 +133,21 @@ body {
   html {
     @apply font-sans;
   }
+  button {
+    @apply cursor-pointer;
+  }
   ::selection {
     @apply bg-primary/30 text-foreground;
+  }
+}
+
+@keyframes logo-signal {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(3px, -3px);
   }
 }
 

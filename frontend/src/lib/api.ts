@@ -1,18 +1,35 @@
+import type {
+  AuthenticationResponseJSON,
+  PublicKeyCredentialCreationOptionsJSON,
+  PublicKeyCredentialRequestOptionsJSON,
+  RegistrationResponseJSON,
+} from "@simplewebauthn/browser";
+
 const baseURL = import.meta.env.VITE_API_URL ?? "http://localhost:8080/api/v1";
 let accessToken = "";
 let refreshInFlight: Promise<boolean> | null = null;
 let sessionExpiredHandler: (() => void) | undefined;
 
 export type Role = "viewer" | "operator" | "admin";
+
 export type ServerStatus = "up" | "down" | "paused";
+
 export type MonitorType = "http" | "tcp" | "icmp";
+
 export type IncidentSeverity = "low" | "medium" | "high" | "critical";
+
 export type IncidentStatus = "open" | "acknowledged" | "resolved";
+
 export type Links = { self: string; next: string | null; previous: string | null };
+
 export type Pagination = { page: number; pageSize: number; total: number; totalPages: number };
+
 export type ListResponse<T> = { data: T[]; pagination: Pagination; links: Links };
+
 export type ResourceResponse<T> = { data: T; _links: Record<string, string> };
+
 export type User = { id: string; email: string; role: Role; createdAt: string; updatedAt: string };
+
 export type Server = {
   id: string;
   ownerId: string;
@@ -24,6 +41,7 @@ export type Server = {
   createdAt: string;
   updatedAt: string;
 };
+
 export type Monitor = {
   id: string;
   serverId: string;
@@ -37,6 +55,7 @@ export type Monitor = {
   createdAt: string;
   updatedAt: string;
 };
+
 export type Incident = {
   id: string;
   monitorId: string;
@@ -49,7 +68,31 @@ export type Incident = {
   createdAt: string;
   updatedAt: string;
 };
+
 export type AuthResponse = { accessToken: string; user: Pick<User, "id" | "email" | "role"> };
+
+export type LoginResponse = AuthResponse | { twoFactorRequired: true };
+
+export type TwoFactorEnrollment = { secret: string; uri: string; expiresAt: string };
+
+export type BackupCodesResponse = { backupCodes: string[] };
+
+export type OAuthProvider = { id: string; name: string; loginUrl: string };
+
+export type OAuthConnection = { id: string; name: string; available: boolean; connected: boolean };
+
+export type Passkey = { id: string; name: string; createdAt: string; lastUsedAt: string | null };
+
+export type PasskeyOptions<T> = { ceremonyToken: string; optionsJSON: T };
+
+export type AccountSettings = {
+  email: string;
+  hasPassword: boolean;
+  providers: OAuthConnection[];
+  twoFactorEnabled: boolean;
+  backupCodesRemaining: number;
+};
+
 export type StatusResponse = { servers: number; monitors: number; openIncidents: number };
 
 export class ApiError extends Error {
@@ -65,6 +108,7 @@ export class ApiError extends Error {
 
 function withQuery(path: string, params: Record<string, string | number | undefined> = {}) {
   const query = new URLSearchParams();
+
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== "") query.set(key, String(value));
   }
@@ -81,6 +125,7 @@ async function refreshAccessToken() {
     })
       .then(async (response) => {
         if (!response.ok) return false;
+
         const result = (await response.json()) as AuthResponse;
         accessToken = result.accessToken;
 
@@ -98,10 +143,13 @@ async function refreshAccessToken() {
 export async function api<T>(path: string, init: RequestInit = {}, retried = false): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
+
   if (init.body) headers.set("Content-Type", "application/json");
+
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
 
   let response: Response;
+
   try {
     response = await fetch(`${baseURL}${path}`, { ...init, credentials: "include", headers });
   } catch (cause) {
@@ -112,12 +160,19 @@ export async function api<T>(path: string, init: RequestInit = {}, retried = fal
     );
   }
 
-  const canRefresh = !["/auth/login", "/auth/register", "/auth/refresh"].includes(path);
+  // First-factor and challenge failures must not trigger normal session restoration.
+  const canRefresh =
+    !["/auth/login", "/auth/register", "/auth/refresh"].includes(path) &&
+    !path.startsWith("/auth/two-factor/") &&
+    !path.startsWith("/auth/passkeys/");
+
   if (response.status === 401 && canRefresh) {
     if (!retried && (await refreshAccessToken())) return api<T>(path, init, true);
+
     accessToken = "";
     sessionExpiredHandler?.();
   }
+
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new ApiError(
@@ -137,9 +192,75 @@ export const authApi = {
       body: JSON.stringify({ email, password }),
     }),
   login: (email: string, password: string) =>
-    api<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
+    api<LoginResponse>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+  beginPasskeyLogin: () =>
+    api<PasskeyOptions<PublicKeyCredentialRequestOptionsJSON>>("/auth/passkeys/login/options", {
+      method: "POST",
+    }),
+  finishPasskeyLogin: (ceremonyToken: string, credential: AuthenticationResponseJSON) =>
+    api<AuthResponse>("/auth/passkeys/login/verify", {
+      method: "POST",
+      body: JSON.stringify({ ceremonyToken, credential }),
+    }),
+  verifyTwoFactor: (code: string, backupCode: boolean) =>
+    api<AuthResponse>("/auth/two-factor/verify", {
+      method: "POST",
+      body: JSON.stringify({ code, backupCode }),
+    }),
+  cancelTwoFactor: () => api<void>("/auth/two-factor/cancel", { method: "POST" }),
   logout: () => api<void>("/auth/logout", { method: "POST" }),
   me: () => api<Pick<User, "id" | "email" | "role">>("/auth/me"),
+  providers: () => api<OAuthProvider[]>("/auth/providers"),
+  oauthLoginURL: (provider: OAuthProvider) => `${baseURL}${provider.loginUrl}`,
+  linkOAuth: (provider: string) =>
+    api<{ authorizeUrl: string }>(`/auth/oauth/${encodeURIComponent(provider)}/link`, {
+      method: "POST",
+    }),
+  unlinkOAuth: (provider: string) =>
+    api<void>(`/auth/oauth/${encodeURIComponent(provider)}/link`, { method: "DELETE" }),
+};
+
+export const accountApi = {
+  settings: () => api<AccountSettings>("/account"),
+  passkeys: () => api<Passkey[]>("/account/passkeys"),
+  beginPasskeyRegistration: () =>
+    api<PasskeyOptions<PublicKeyCredentialCreationOptionsJSON>>("/account/passkeys/options", {
+      method: "POST",
+    }),
+  finishPasskeyRegistration: (
+    ceremonyToken: string,
+    credential: RegistrationResponseJSON,
+    name: string,
+  ) =>
+    api<Passkey>("/account/passkeys/verify", {
+      method: "POST",
+      body: JSON.stringify({ ceremonyToken, credential, name }),
+    }),
+  deletePasskey: (id: string) =>
+    api<void>(`/account/passkeys/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  setupTwoFactor: (currentPassword: string) =>
+    api<TwoFactorEnrollment>("/account/two-factor/setup", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword }),
+    }),
+  confirmTwoFactor: (code: string) =>
+    api<BackupCodesResponse>("/account/two-factor/confirm", {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    }),
+  manageTwoFactor: (disable: boolean, currentPassword: string, code: string, backupCode: boolean) =>
+    api<BackupCodesResponse | undefined>(
+      `/account/two-factor/${disable ? "disable" : "backup-codes"}`,
+      { method: "POST", body: JSON.stringify({ currentPassword, code, backupCode }) },
+    ),
+  setPassword: (currentPassword: string, newPassword: string) =>
+    api<void>("/account/password", {
+      method: "PUT",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
 };
 
 export const systemApi = {
@@ -195,6 +316,7 @@ export const monitorsApi = {
 };
 
 export type IncidentRow = Incident & { serverId: string; monitorName: string };
+
 export const incidentsApi = {
   overview: (
     params: {

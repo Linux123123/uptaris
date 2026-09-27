@@ -31,19 +31,22 @@ func (h *Handlers) Servers(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	pageNumber, pageSize, ok := request.Page(c)
 	if !ok {
 		return
 	}
-	filters := models.Filters{}
-	filters.Status, ok = request.Filter(c, "status", "up", "down", "paused")
+
+	status, ok := request.Filter(c, "status", "up", "down", "paused")
 	if !ok {
 		return
 	}
-	rows, total, err := models.ListServers(c.Request.Context(), h.db, currentActor.ID, currentActor.Role == "admin", models.Page{Number: pageNumber, Size: pageSize}, filters)
+
+	rows, total, err := models.ListServers(c.Request.Context(), h.db, currentActor.ID, currentActor.Role == "admin", pageNumber, pageSize, status)
 	if !response.ResourceError(c, err, "server") {
 		return
 	}
+
 	response.List(c, rows, total, pageNumber, pageSize)
 }
 
@@ -69,10 +72,13 @@ func (h *Handlers) CreateServer(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	var input request.ServerInput
+
 	if !request.JSON(c, &input) {
 		return
 	}
+
 	server := models.Server{
 		OwnerID:         currentActor.ID,
 		Name:            input.Name,
@@ -81,13 +87,16 @@ func (h *Handlers) CreateServer(c *gin.Context) {
 		Description:     input.Description,
 		Status:          defaultOf(input.Status, "up"),
 	}
+
 	if !request.Valid(c, request.PrepareServer(&server)) {
 		return
 	}
+
 	if err := server.Create(c.Request.Context(), h.db); err != nil {
 		response.Error(c, err)
 		return
 	}
+
 	c.Header("Location", "/api/v1/servers/"+strconv.FormatUint(uint64(server.ID), 10))
 	c.JSON(201, server)
 }
@@ -97,14 +106,17 @@ func (h *Handlers) oneServer(c *gin.Context) (auth.Identity, *models.Server, boo
 	if !ok {
 		return currentActor, nil, false
 	}
+
 	serverID, ok := request.ID(c, "serverId")
 	if !ok {
 		return currentActor, nil, false
 	}
+
 	server, err := models.GetServer(c.Request.Context(), h.db, currentActor.ID, currentActor.Role == "admin", serverID)
 	if !response.ResourceError(c, err, "server") {
 		return currentActor, nil, false
 	}
+
 	return currentActor, server, true
 }
 
@@ -151,22 +163,27 @@ func (h *Handlers) UpdateServer(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	if currentActor.Role == "viewer" {
 		response.Fail(c, 403, "forbidden", "viewer is read only")
 		return
 	}
+
 	var input request.ServerPatchInput
+
 	if !request.JSON(c, &input) {
 		return
 	}
 
 	err := server.Update(c.Request.Context(), h.db, func(value *models.Server) error {
 		input.Apply(value)
+
 		return request.PrepareServer(value)
 	})
 	if !response.ResourceError(c, err, "server") {
 		return
 	}
+
 	c.JSON(200, server)
 }
 
@@ -190,13 +207,16 @@ func (h *Handlers) DeleteServer(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	if currentActor.Role == "viewer" {
 		response.Fail(c, 403, "forbidden", "viewer is read only")
 		return
 	}
+
 	if err := server.Delete(c.Request.Context(), h.db); err != nil {
 		response.Error(c, err)
 		return
 	}
+
 	c.Status(204)
 }

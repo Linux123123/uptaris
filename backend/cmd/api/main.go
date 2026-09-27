@@ -20,7 +20,9 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/uptaris/uptaris/backend/internal/accounts"
 	"github.com/uptaris/uptaris/backend/internal/auth"
+	"github.com/uptaris/uptaris/backend/internal/auth/providers"
 	"github.com/uptaris/uptaris/backend/internal/config"
 	"github.com/uptaris/uptaris/backend/internal/database"
 	"github.com/uptaris/uptaris/backend/internal/handlers"
@@ -44,28 +46,41 @@ func run() int {
 			BeforeSend:     observability.ScrubEvent,
 		}); err != nil {
 			logger.Error("initialize sentry", "error", err)
+
 			return 1
 		}
+
 		defer sentry.Flush(2 * time.Second)
 	}
 
 	if cfg.SentryDSN != "" {
 		logger = observability.NewLogger(cfg.Environment, os.Stdout, sentry.CurrentHub())
 	}
+
 	slog.SetDefault(logger)
 	db, err := database.Open(cfg.DatabaseURL)
 	if err != nil {
 		logger.Error("open database", "error_type", fmt.Sprintf("%T", err))
+
 		return 1
 	}
 
 	sqlDB, err := db.DB()
 	if err != nil {
 		logger.Error("get database connection")
+
 		return 1
 	}
+
 	defer sqlDB.Close()
-	httpHandlers := handlers.New(db, auth.New(db, cfg), users.New(db), cfg, sqlDB.PingContext)
+	oauthProviders, err := providers.Build(cfg.OAuthProviders)
+	if err != nil {
+		logger.Error("configure OAuth providers", "error", err)
+
+		return 1
+	}
+
+	httpHandlers := handlers.New(db, auth.New(db, cfg, oauthProviders...), accounts.New(db), users.New(db), cfg, sqlDB.PingContext)
 	router := routers.Configure(cfg, httpHandlers, logger)
 	server := &http.Server{
 		Addr:              net.JoinHostPort(cfg.Host, cfg.Port),
@@ -90,8 +105,10 @@ func run() int {
 	case <-stop:
 	case err := <-serveErr:
 		logger.Error("serve API", "error", err)
+
 		return 1
 	}
+
 	defer signal.Stop(stop)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -99,5 +116,6 @@ func run() int {
 	if err := server.Shutdown(ctx); err != nil {
 		logger.Error("shutdown API", "error", err)
 	}
+
 	return 0
 }

@@ -19,7 +19,7 @@ Uptaris is a web app for managing servers, monitors, and incidents.
 
 ## Documentation
 
-[Development](docs/development.md) · [Build and deployment](docs/build.md) · [Testing](docs/testing.md) · [Project wiki](https://github.com/Linux123123/uptaris/wiki)
+[Development](docs/development.md) · [Build and deployment](docs/build.md) · [Project wiki](https://github.com/Linux123123/uptaris/wiki)
 
 ## License
 

@@ -13,9 +13,12 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as TwoFactorRouteImport } from './routes/two-factor'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as AppIncidentsRouteImport } from './routes/app/incidents'
 import { Route as AppServersRouteImport } from './routes/app/servers'
+import { Route as AppSettingsRouteImport } from './routes/app/settings'
+import { Route as OauthCallbackRouteImport } from './routes/oauth/callback'
 import { Route as AppAdminUsersRouteImport } from './routes/app/admin/users'
 import { Route as AppServersServerIdRouteImport } from './routes/app/servers_/$serverId'
 import { Route as AppServersServerIdMonitorsMonitorIdRouteImport } from './routes/app/servers_/$serverId_/monitors/$monitorId'
@@ -40,6 +43,11 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TwoFactorRoute = TwoFactorRouteImport.update({
+  id: '/two-factor',
+  path: '/two-factor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -54,6 +62,16 @@ const AppServersRoute = AppServersRouteImport.update({
   id: '/servers',
   path: '/servers',
   getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const OauthCallbackRoute = OauthCallbackRouteImport.update({
+  id: '/oauth/callback',
+  path: '/oauth/callback',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
   id: '/admin/users',
@@ -77,9 +95,12 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/two-factor': typeof TwoFactorRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/incidents': typeof AppIncidentsRoute
   '/app/servers': typeof AppServersRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/oauth/callback': typeof OauthCallbackRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/servers/$serverId': typeof AppServersServerIdRoute
   '/app/servers/$serverId/monitors/$monitorId': typeof AppServersServerIdMonitorsMonitorIdRoute
@@ -89,9 +110,12 @@ export interface FileRoutesByTo {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/two-factor': typeof TwoFactorRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/incidents': typeof AppIncidentsRoute
   '/app/servers': typeof AppServersRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/oauth/callback': typeof OauthCallbackRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/servers/$serverId': typeof AppServersServerIdRoute
   '/app/servers/$serverId/monitors/$monitorId': typeof AppServersServerIdMonitorsMonitorIdRoute
@@ -102,9 +126,12 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/two-factor': typeof TwoFactorRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/incidents': typeof AppIncidentsRoute
   '/app/servers': typeof AppServersRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/oauth/callback': typeof OauthCallbackRoute
   '/app/admin/users': typeof AppAdminUsersRoute
   '/app/servers_/$serverId': typeof AppServersServerIdRoute
   '/app/servers_/$serverId_/monitors/$monitorId': typeof AppServersServerIdMonitorsMonitorIdRoute
@@ -116,9 +143,12 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/register'
+    | '/two-factor'
     | '/app/dashboard'
     | '/app/incidents'
     | '/app/servers'
+    | '/app/settings'
+    | '/oauth/callback'
     | '/app/admin/users'
     | '/app/servers/$serverId'
     | '/app/servers/$serverId/monitors/$monitorId'
@@ -128,9 +158,12 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/register'
+    | '/two-factor'
     | '/app/dashboard'
     | '/app/incidents'
     | '/app/servers'
+    | '/app/settings'
+    | '/oauth/callback'
     | '/app/admin/users'
     | '/app/servers/$serverId'
     | '/app/servers/$serverId/monitors/$monitorId'
@@ -140,9 +173,12 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/register'
+    | '/two-factor'
     | '/app/dashboard'
     | '/app/incidents'
     | '/app/servers'
+    | '/app/settings'
+    | '/oauth/callback'
     | '/app/admin/users'
     | '/app/servers_/$serverId'
     | '/app/servers_/$serverId_/monitors/$monitorId'
@@ -153,6 +189,8 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  TwoFactorRoute: typeof TwoFactorRoute
+  OauthCallbackRoute: typeof OauthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -185,6 +223,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/two-factor': {
+      id: '/two-factor'
+      path: '/two-factor'
+      fullPath: '/two-factor'
+      preLoaderRoute: typeof TwoFactorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/dashboard': {
       id: '/app/dashboard'
       path: '/dashboard'
@@ -205,6 +250,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/servers'
       preLoaderRoute: typeof AppServersRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/oauth/callback': {
+      id: '/oauth/callback'
+      path: '/oauth/callback'
+      fullPath: '/oauth/callback'
+      preLoaderRoute: typeof OauthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/admin/users': {
       id: '/app/admin/users'
@@ -234,6 +293,7 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppIncidentsRoute: typeof AppIncidentsRoute
   AppServersRoute: typeof AppServersRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
   AppServersServerIdRoute: typeof AppServersServerIdRoute
   AppServersServerIdMonitorsMonitorIdRoute: typeof AppServersServerIdMonitorsMonitorIdRoute
@@ -243,6 +303,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppIncidentsRoute: AppIncidentsRoute,
   AppServersRoute: AppServersRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
   AppServersServerIdRoute: AppServersServerIdRoute,
   AppServersServerIdMonitorsMonitorIdRoute:
@@ -256,6 +317,8 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  TwoFactorRoute: TwoFactorRoute,
+  OauthCallbackRoute: OauthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

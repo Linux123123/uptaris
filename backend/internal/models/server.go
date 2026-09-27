@@ -28,21 +28,24 @@ func (value *Server) Update(ctx context.Context, db *gorm.DB, change func(*Serve
 func GetServer(ctx context.Context, db *gorm.DB, ownerID uint, admin bool, id uint) (*Server, error) {
 	value := new(Server)
 	err := serverScope(db.WithContext(ctx), ownerID, admin).First(value, id).Error
+
 	return value, err
 }
 
-func ListServers(ctx context.Context, db *gorm.DB, ownerID uint, admin bool, page Page, filters Filters) ([]Server, int, error) {
+func ListServers(ctx context.Context, db *gorm.DB, ownerID uint, admin bool, page, pageSize int, status string) ([]Server, int, error) {
 	query := serverScope(db.WithContext(ctx), ownerID, admin)
-	if filters.Status != "" {
-		query = query.Where("status = ?", filters.Status)
+	if status != "" {
+		query = query.Where("status = ?", status)
 	}
-	return listRows[Server](query, page, "created_at desc, id desc")
+
+	return listRows[Server](query, page, pageSize, "created_at desc, id desc")
 }
 
 func serverScope(db *gorm.DB, ownerID uint, admin bool) *gorm.DB {
 	if !admin {
 		return db.Where("owner_id = ?", ownerID)
 	}
+
 	return db
 }
 
@@ -52,9 +55,11 @@ func (value *Server) Delete(ctx context.Context, db *gorm.DB) error {
 		if err := tx.Where("monitor_id IN (?)", monitors).Delete(&Incident{}).Error; err != nil {
 			return err
 		}
+
 		if err := tx.Where("server_id = ?", value.ID).Delete(&Monitor{}).Error; err != nil {
 			return err
 		}
+
 		return tx.Delete(value).Error
 	})
 }

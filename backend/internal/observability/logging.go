@@ -18,6 +18,7 @@ func Redact(groups []string, a slog.Attr) slog.Attr {
 			return slog.String(a.Key, "[REDACTED]")
 		}
 	}
+
 	return a
 }
 
@@ -26,10 +27,12 @@ func NewLogger(environment string, output io.Writer, hub *sentry.Hub) *slog.Logg
 	if environment == "development" {
 		level = slog.LevelDebug
 	}
+
 	console := slog.NewJSONHandler(output, &slog.HandlerOptions{Level: level, ReplaceAttr: Redact})
 	if hub == nil {
 		return slog.New(console)
 	}
+
 	remote := sentryslog.Option{
 		Hub:         hub,
 		EventLevel:  []slog.Level{slog.LevelError},
@@ -37,6 +40,7 @@ func NewLogger(environment string, output io.Writer, hub *sentry.Hub) *slog.Logg
 		ReplaceAttr: Redact,
 		AddSource:   true,
 	}.NewSentryHandler(context.Background())
+
 	return slog.New(slogmulti.Fanout(console, remote))
 }
 
@@ -48,6 +52,8 @@ func ScrubEvent(event *sentry.Event, _ *sentry.EventHint) *sentry.Event {
 		event.Request.Data = ""
 		event.Request.QueryString = ""
 	}
+
 	event.User = sentry.User{}
+
 	return event
 }

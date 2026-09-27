@@ -12,10 +12,14 @@ func Valid(c *gin.Context, err error) bool {
 		if _, ok := err.(*ValidationError); !ok {
 			slog.ErrorContext(c.Request.Context(), "validation failed", "error", err)
 			response.Fail(c, 500, "internal_error", "request validation unavailable")
+
 			return false
 		}
+
 		response.Error(c, err)
+
 		return false
 	}
+
 	return true
 }

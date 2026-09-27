@@ -1,8 +1,17 @@
 package response
 
 import (
+	"github.com/uptaris/uptaris/backend/internal/accounts"
+	"github.com/uptaris/uptaris/backend/internal/auth"
+	"github.com/uptaris/uptaris/backend/internal/inventory"
 	"github.com/uptaris/uptaris/backend/internal/models"
 )
+
+type AccountSettingsResponse = accounts.Settings
+
+type PasskeyOptionsResponse = auth.PasskeyOptions
+
+type PasskeyResponse = auth.PasskeyInfo
 
 // ErrorResponse is returned for every non-success API response.
 type ErrorResponse struct {
@@ -98,10 +107,28 @@ func User(user *models.User) UserResponse {
 }
 
 type IncidentOverviewResponse struct {
-	Data       []models.IncidentRow `json:"data"`
-	Pagination Pagination           `json:"pagination"`
-	Links      Links                `json:"links"`
+	Data       []inventory.IncidentRow `json:"data"`
+	Pagination Pagination              `json:"pagination"`
+	Links      Links                   `json:"links"`
 }
 
 // UserRecord is the public user model returned by administration operations.
 type UserRecord = models.User
+
+// BackupCodesResponse exposes newly generated recovery codes only once.
+type BackupCodesResponse struct {
+	BackupCodes []string `json:"backupCodes"`
+}
+
+type TwoFactorEnrollmentResponse = auth.Enrollment
+type TwoFactorRequiredResponse struct {
+	TwoFactorRequired bool `json:"twoFactorRequired"`
+}
+
+// SignInResponse describes either a completed session or a pending second factor.
+// AccessToken and User are present only after all required factors pass.
+type SignInResponse struct {
+	AccessToken       string        `json:"accessToken,omitempty"`
+	User              *UserResponse `json:"user,omitempty"`
+	TwoFactorRequired bool          `json:"twoFactorRequired,omitempty"`
+}

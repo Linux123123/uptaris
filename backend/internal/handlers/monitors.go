@@ -32,23 +32,27 @@ func (h *Handlers) Monitors(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	pageNumber, pageSize, ok := request.Page(c)
 	if !ok {
 		return
 	}
-	filters := models.Filters{}
-	filters.Type, ok = request.Filter(c, "type", "http", "tcp", "icmp")
+
+	monitorType, ok := request.Filter(c, "type", "http", "tcp", "icmp")
 	if !ok {
 		return
 	}
-	filters.Status, ok = request.Filter(c, "status", "up", "down", "paused")
+
+	status, ok := request.Filter(c, "status", "up", "down", "paused")
 	if !ok {
 		return
 	}
-	rows, total, err := models.ListMonitors(c.Request.Context(), h.db, server.ID, models.Page{Number: pageNumber, Size: pageSize}, filters)
+
+	rows, total, err := models.ListMonitors(c.Request.Context(), h.db, server.ID, pageNumber, pageSize, monitorType, status)
 	if !response.ResourceError(c, err, "monitor") {
 		return
 	}
+
 	response.List(c, rows, total, pageNumber, pageSize)
 }
 
@@ -76,14 +80,18 @@ func (h *Handlers) CreateMonitor(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	if currentActor.Role == "viewer" {
 		response.Fail(c, 403, "forbidden", "viewer is read only")
 		return
 	}
+
 	var input request.MonitorInput
+
 	if !request.JSON(c, &input) {
 		return
 	}
+
 	monitor := models.Monitor{
 		ServerID:        server.ID,
 		Name:            input.Name,
@@ -93,13 +101,16 @@ func (h *Handlers) CreateMonitor(c *gin.Context) {
 		ExpectedHealth:  input.ExpectedHealth,
 		Status:          defaultOf(input.Status, "up"),
 	}
+
 	if !request.Valid(c, request.PrepareMonitor(&monitor)) {
 		return
 	}
+
 	if err := monitor.Create(c.Request.Context(), h.db); err != nil {
 		response.Error(c, err)
 		return
 	}
+
 	c.Header("Location", c.Request.URL.Path+"/"+strconv.FormatUint(uint64(monitor.ID), 10))
 	c.JSON(201, monitor)
 }
@@ -109,14 +120,17 @@ func (h *Handlers) oneMonitor(c *gin.Context) (auth.Identity, *models.Server, *m
 	if !ok {
 		return currentActor, nil, nil, false
 	}
+
 	monitorID, ok := request.ID(c, "monitorId")
 	if !ok {
 		return currentActor, nil, nil, false
 	}
+
 	monitor, err := models.GetMonitor(c.Request.Context(), h.db, server.ID, monitorID)
 	if !response.ResourceError(c, err, "monitor") {
 		return currentActor, nil, nil, false
 	}
+
 	return currentActor, server, monitor, true
 }
 
@@ -165,22 +179,27 @@ func (h *Handlers) UpdateMonitor(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	if currentActor.Role == "viewer" {
 		response.Fail(c, 403, "forbidden", "viewer is read only")
 		return
 	}
+
 	var input request.MonitorPatchInput
+
 	if !request.JSON(c, &input) {
 		return
 	}
 
 	err := monitor.Update(c.Request.Context(), h.db, func(value *models.Monitor) error {
 		input.Apply(value)
+
 		return request.PrepareMonitor(value)
 	})
 	if !response.ResourceError(c, err, "monitor") {
 		return
 	}
+
 	c.JSON(200, monitor)
 }
 
@@ -205,13 +224,16 @@ func (h *Handlers) DeleteMonitor(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	if currentActor.Role == "viewer" {
 		response.Fail(c, 403, "forbidden", "viewer is read only")
 		return
 	}
+
 	if err := monitor.Delete(c.Request.Context(), h.db); err != nil {
 		response.Error(c, err)
 		return
 	}
+
 	c.Status(204)
 }

@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 
+	"github.com/uptaris/uptaris/backend/internal/accounts"
 	"github.com/uptaris/uptaris/backend/internal/auth"
 	"github.com/uptaris/uptaris/backend/internal/config"
 	"github.com/uptaris/uptaris/backend/internal/users"
@@ -10,20 +11,29 @@ import (
 )
 
 type Handlers struct {
-	db     *gorm.DB
-	auth   *auth.Service
-	users  *users.Service
-	cfg    config.Config
-	health func(context.Context) error
+	db       *gorm.DB
+	auth     *auth.Service
+	accounts *accounts.Service
+	users    *users.Service
+	cfg      config.Config
+	health   func(context.Context) error
 }
 
-func New(db *gorm.DB, authentication *auth.Service, accounts *users.Service, cfg config.Config, health func(context.Context) error) *Handlers {
+func New(
+	db *gorm.DB,
+	authentication *auth.Service,
+	accountSettings *accounts.Service,
+	userManagement *users.Service,
+	cfg config.Config,
+	health func(context.Context) error,
+) *Handlers {
 	return &Handlers{
-		db:     db,
-		auth:   authentication,
-		users:  accounts,
-		cfg:    cfg,
-		health: health,
+		db:       db,
+		auth:     authentication,
+		accounts: accountSettings,
+		users:    userManagement,
+		cfg:      cfg,
+		health:   health,
 	}
 }
 
@@ -31,5 +41,6 @@ func defaultOf(v, d string) string {
 	if v == "" {
 		return d
 	}
+
 	return v
 }

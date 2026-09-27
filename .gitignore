@@ -7,13 +7,11 @@
 node_modules/
 .pnpm-store/
 dist/
-coverage/
 *.tsbuildinfo
 
 # Go
 bin/
 backend/api
-*.test
 *.out
 
 # Editors and OS

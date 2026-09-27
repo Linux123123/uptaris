@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { EmptyState } from "@/components/empty-state";
+import { EmptyState } from "@/components/feedback/empty-state";
 
 const pageSizeOptions = [10, 20, 50, 100];
 

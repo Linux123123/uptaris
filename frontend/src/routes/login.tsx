@@ -1,12 +1,14 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
-import { AuthPage } from "@/components/auth-page";
-import { PublicLayout } from "@/components/layout/public-layout";
+import { AuthForm } from "@/components/forms/auth-form";
+import { AuthLayout } from "@/components/layout/auth-layout";
 
 const searchSchema = z.object({
   redirect: z.string().startsWith("/app").optional().catch(undefined),
   registered: z.coerce.boolean().optional().catch(false),
+  oauth_error: z.string().optional().catch(undefined),
 });
+
 export const Route = createFileRoute("/login")({
   validateSearch: searchSchema,
   beforeLoad: ({ context }) => {
@@ -14,12 +16,18 @@ export const Route = createFileRoute("/login")({
   },
   component: LoginPage,
 });
+
 function LoginPage() {
-  const { redirect, registered } = Route.useSearch();
+  const { redirect, registered, oauth_error } = Route.useSearch();
 
   return (
-    <PublicLayout>
-      <AuthPage register={false} registered={registered} redirectTo={redirect} />
-    </PublicLayout>
+    <AuthLayout>
+      <AuthForm
+        register={false}
+        registered={registered}
+        redirectTo={redirect}
+        oauthError={oauth_error}
+      />
+    </AuthLayout>
   );
 }

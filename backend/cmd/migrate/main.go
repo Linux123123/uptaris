@@ -12,19 +12,23 @@ import (
 )
 
 func main() {
+	if len(os.Args) > 1 {
+		fmt.Fprintln(os.Stderr, "usage: migrate (forward migrations only; no arguments)")
+		os.Exit(2)
+	}
+
 	cfg := config.Load()
 	m, err := migrate.New("file://migrations", cfg.DatabaseURL)
 	if err != nil {
 		panic(err)
 	}
+
 	defer m.Close()
-	if len(os.Args) > 1 && os.Args[1] == "down" {
-		err = m.Steps(-1)
-	} else {
-		err = m.Up()
-	}
+	err = m.Up()
+
 	if err != nil && err != migrate.ErrNoChange {
 		panic(err)
 	}
+
 	fmt.Println("migrations complete")
 }

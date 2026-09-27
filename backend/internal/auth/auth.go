@@ -31,9 +31,11 @@ func CheckPassword(encoded, password string) error {
 	if err != nil {
 		return err
 	}
+
 	if !match {
 		return errors.New("password mismatch")
 	}
+
 	return nil
 }
 
@@ -42,11 +44,13 @@ func NewRefresh() (string, error) {
 	if _, e := rand.Read(b); e != nil {
 		return "", e
 	}
+
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
 func HashRefresh(token, pepper string) string {
 	sum := sha256.Sum256([]byte(token + pepper))
+
 	return fmt.Sprintf("%x", sum)
 }
 
@@ -59,6 +63,7 @@ func Issue(userID uint64, sessionID uint, role, secret string, ttl time.Duration
 	if e != nil {
 		return "", "", e
 	}
+
 	now := time.Now()
 	claims := Claims{
 		Role:      role,
@@ -71,8 +76,10 @@ func Issue(userID uint64, sessionID uint, role, secret string, ttl time.Duration
 			ExpiresAt: jwt.NewNumericDate(now.Add(ttl)),
 		},
 	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signed, e := token.SignedString([]byte(secret))
+
 	return signed, jti, e
 }
 
@@ -85,6 +92,7 @@ func Parse(token, secret string) (*Claims, error) {
 			if t.Method.Alg() != jwt.SigningMethodHS256.Alg() {
 				return nil, errors.New("unexpected signing method")
 			}
+
 			return []byte(secret), nil
 		},
 		jwt.WithValidMethods([]string{"HS256"}),
@@ -95,5 +103,6 @@ func Parse(token, secret string) (*Claims, error) {
 	if err == nil && (claims.SessionID == 0 || claims.ID == "" || claims.Subject == "" || claims.ExpiresAt == nil) {
 		err = errors.New("required claims missing")
 	}
+
 	return claims, err
 }

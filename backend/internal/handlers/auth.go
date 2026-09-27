@@ -4,10 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/uptaris/uptaris/backend/internal/middleware"
-
 	"github.com/gin-gonic/gin"
 	"github.com/uptaris/uptaris/backend/internal/auth"
+	"github.com/uptaris/uptaris/backend/internal/middleware"
 	"github.com/uptaris/uptaris/backend/internal/request"
 	"github.com/uptaris/uptaris/backend/internal/response"
 )
@@ -15,7 +14,7 @@ import (
 // @Summary Register account
 // @Tags auth
 // @Accept json
-// @Param body body request.Credentials true "Email and password"
+// @Param body body request.Credentials true "Email and new password"
 // @Success 201 {object} response.CreateUserResponse
 // @Produce json
 // @Header 201 {string} Location "Created resource URI"
@@ -32,26 +31,31 @@ import (
 // @Router /auth/register [post]
 func (h *Handlers) Register(c *gin.Context) {
 	var input request.Credentials
+
 	if !request.JSON(c, &input) {
 		return
 	}
+
 	if !request.Valid(c, request.Validate(&input)) {
 		return
 	}
+
 	user, err := h.auth.Register(c.Request.Context(), input.Email, input.Password)
 	if err != nil {
 		response.Error(c, err)
 		return
 	}
+
 	c.Header("Location", "/api/v1/auth/me")
 	c.JSON(201, response.User(user))
 }
 
 // @Summary Log in
+// @Description Returns accessToken and refresh cookie, or {"twoFactorRequired":true} and HttpOnly challenge cookie when 2FA is enabled. Complete /auth/two-factor/verify before using authenticated routes.
 // @Tags auth
 // @Accept json
 // @Param body body request.Credentials true "Email and password"
-// @Success 200 {object} response.AuthResponse
+// @Success 200 {object} response.SignInResponse
 // @Produce json
 // @Header 200 {string} Set-Cookie "HttpOnly refresh cookie"
 // @Failure 400 {object} response.ErrorResponse "invalid_json: malformed JSON body"
@@ -67,17 +71,21 @@ func (h *Handlers) Register(c *gin.Context) {
 // @Router /auth/login [post]
 func (h *Handlers) Login(c *gin.Context) {
 	var input request.Credentials
+
 	if !request.JSON(c, &input) {
 		return
 	}
+
 	if !request.Valid(c, request.Validate(&input)) {
 		return
 	}
+
 	session, err := h.auth.Login(c.Request.Context(), input.Email, input.Password)
 	if err != nil {
 		response.Error(c, err)
 		return
 	}
+
 	h.session(c, session)
 }
 
@@ -100,11 +108,13 @@ func (h *Handlers) Refresh(c *gin.Context) {
 		response.Fail(c, 401, "refresh_required", "refresh token required")
 		return
 	}
+
 	session, err := h.auth.Refresh(c.Request.Context(), cookie.Value)
 	if err != nil {
 		response.Error(c, err)
 		return
 	}
+
 	h.session(c, session)
 }
 
@@ -127,10 +137,12 @@ func (h *Handlers) Logout(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	if err := h.auth.Logout(c.Request.Context(), identity); err != nil {
 		response.Error(c, err)
 		return
 	}
+
 	h.cookie(c, "", -1)
 	c.Status(204)
 }
@@ -150,34 +162,48 @@ func (h *Handlers) Me(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	user, err := h.auth.User(c.Request.Context(), identity.ID)
 	if err != nil {
 		response.Error(c, err)
 		return
 	}
+
 	c.JSON(200, response.User(user))
 }
 
 func (h *Handlers) cookie(c *gin.Context, value string, maxAge int) {
-	sameSite := http.SameSiteLaxMode
-	if h.cfg.CookieSameSite == "strict" {
-		sameSite = http.SameSiteStrictMode
-	}
-	if h.cfg.CookieSameSite == "none" {
-		sameSite = http.SameSiteNoneMode
-	}
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "uptaris_refresh",
 		Value:    value,
 		Path:     "/api/v1/auth",
 		HttpOnly: true,
 		Secure:   h.cfg.CookieSecure,
-		SameSite: sameSite,
+		SameSite: h.authCookieSameSite(),
 		MaxAge:   maxAge,
 	})
 }
 
 func (h *Handlers) session(c *gin.Context, session *auth.Session) {
+	if session.ChallengeToken != "" {
+		h.challengeCookie(c, session.ChallengeToken, 300)
+		h.cookie(c, "", -1)
+		c.JSON(200, response.TwoFactorRequiredResponse{TwoFactorRequired: true})
+		return
+	}
+
+	h.challengeCookie(c, "", -1)
 	h.cookie(c, session.RefreshToken, max(1, int(time.Until(session.ExpiresAt).Seconds())))
 	c.JSON(200, response.AuthResponse{AccessToken: session.AccessToken, User: response.User(&session.User)})
+}
+
+func (h *Handlers) authCookieSameSite() http.SameSite {
+	switch h.cfg.CookieSameSite {
+	case "strict":
+		return http.SameSiteStrictMode
+	case "none":
+		return http.SameSiteNoneMode
+	default:
+		return http.SameSiteLaxMode
+	}
 }

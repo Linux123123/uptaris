@@ -27,6 +27,7 @@ func Open(dsn string) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if cockroach {
 		db = db.Set("uptaris:cockroachdb", true)
 	}
@@ -35,6 +36,7 @@ func Open(dsn string) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	sqlDB.SetMaxIdleConns(5)
 	sqlDB.SetMaxOpenConns(25)
 	sqlDB.SetConnMaxLifetime(time.Hour)

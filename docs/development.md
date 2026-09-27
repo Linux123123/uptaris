@@ -1,93 +1,113 @@
 # Development
 
-Run commands from repository root.
+Requirements: Go 1.26+, Bun 1.3.11, and a running PostgreSQL or CockroachDB database.
+Run commands from repository root unless noted.
 
-## Requirements
-
-- Bun 1.3.11
-- Go 1.26+
-- Running PostgreSQL or CockroachDB database
-
-## Start application
-
-1. Create local configuration:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-2. Create database `uptaris`, or update `DATABASE_URL` in `.env` with your database connection. Use `cockroachdb://` for CockroachDB so migrations select its driver; the API accepts the same URL and retries CockroachDB transactions. Keep the cluster's TLS parameters, such as `sslmode=verify-full` and `sslrootcert`, in the URL.
-
-3. Start API in first terminal:
-
-   ```bash
-   cd backend
-   go run ./cmd/migrate
-   go run ./cmd/seed
-   go run ./cmd/api
-   ```
-
-4. Start frontend in second terminal:
-
-   ```bash
-   cd frontend
-   bun install
-   bun run dev
-   ```
-
-Open `http://localhost:5173`.
-
-## Local URLs
-
-- Frontend: `http://localhost:5173`
-- API: `http://localhost:8080`
-- Health check: `http://localhost:8080/healthz`
-- Swagger UI: `http://localhost:8080/swagger/index.html`
-
-## Check changes
+## Configuration
 
 ```bash
-cd frontend
-bun run build
-bun run check
-bun run lint
-bun run format:check
-
-cd ../backend
-go vet ./...
-go build ./...
+cp .env.example .env
 ```
 
-## API documentation
+Set `DATABASE_URL` for an existing database. Use `postgres://` for PostgreSQL or
+`cockroachdb://` for CockroachDB. Other local settings can use `.env.example` defaults.
 
-Swagger UI runs at `http://localhost:8080/swagger/index.html`.
-Regenerate the checked-in OpenAPI output after handler annotation changes:
+### Application and sessions
+
+| Environment key        | Local value / purpose                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------------- |
+| `APP_ENV`              | `development`; also supports `production`                                                   |
+| `API_HOST`             | `127.0.0.1`                                                                                 |
+| `API_PORT`             | `8080`                                                                                      |
+| `DATABASE_URL`         | `postgres://uptaris:uptaris@localhost:5432/uptaris?sslmode=disable`                         |
+| `VITE_API_URL`         | `http://localhost:8080/api/v1`                                                              |
+| `FRONTEND_URL`         | `http://localhost:5173`                                                                     |
+| `WEBAUTHN_RP_ID`       | `localhost` locally; required in production and scoped to frontend domain                   |
+| `CORS_ORIGINS`         | `http://localhost:5173`; comma-separated frontend origins                                   |
+| `JWT_ACCESS_SECRET`    | `development-only-change-me` locally; independent secret of at least 32 bytes in production |
+| `REFRESH_TOKEN_PEPPER` | `development-only-change-me` locally; independent secret of at least 32 bytes in production |
+| `ACCESS_TOKEN_TTL`     | `15m`                                                                                       |
+| `REFRESH_TOKEN_TTL`    | `720h`                                                                                      |
+| `COOKIE_SECURE`        | `false` locally; `true` in production                                                       |
+| `COOKIE_SAME_SITE`     | `lax`; `none` requires secure HTTPS cookies                                                 |
+| `TRUSTED_PROXIES`      | Empty; optional comma-separated proxy IPs/CIDRs                                             |
+| `SENTRY_DSN`           | Empty; optional error reporting                                                             |
+
+Production frontend, API callback, and CORS URLs must use HTTPS.
+
+### Optional OAuth and two-factor authentication
+
+Leave `OAUTH_PROVIDERS` empty to disable OAuth. Set it to `github`, `google`, or
+`github,google` and supply credentials for each enabled provider.
+
+| Environment key              | Value / requirement                                                                                              |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `OAUTH_PROVIDERS`            | Empty by default; comma-separated provider IDs                                                                   |
+| `OAUTH_GITHUB_CLIENT_ID`     | Required when GitHub is enabled                                                                                  |
+| `OAUTH_GITHUB_CLIENT_SECRET` | Required when GitHub is enabled                                                                                  |
+| `OAUTH_GITHUB_REDIRECT_URL`  | `http://localhost:8080/api/v1/auth/oauth/github/callback`                                                        |
+| `OAUTH_GOOGLE_CLIENT_ID`     | Required when Google is enabled                                                                                  |
+| `OAUTH_GOOGLE_CLIENT_SECRET` | Required when Google is enabled                                                                                  |
+| `OAUTH_GOOGLE_REDIRECT_URL`  | `http://localhost:8080/api/v1/auth/oauth/google/callback`                                                        |
+| `OAUTH_TOKEN_ENCRYPTION_KEY` | Required with OAuth; persistent 32-byte key encoded as 64 hex characters                                         |
+| `TWO_FACTOR_ENCRYPTION_KEY`  | Required for authenticator enrollment/verification; separate persistent 32-byte key encoded as 64 hex characters |
+
+Provider callback URLs must match their configured redirect URLs exactly. Keep encryption keys stable.
+
+## Run
+
+API, migrations, and optional demo data:
 
 ```bash
 cd backend
+go run ./cmd/migrate
+go run ./cmd/seed
+go run ./cmd/api
+```
+
+Frontend, in another terminal:
+
+```bash
+cd frontend
+bun install
+bun run dev
+```
+
+| Service    | URL                                        |
+| ---------- | ------------------------------------------ |
+| Frontend   | `http://localhost:5173`                    |
+| API        | `http://localhost:8080/api/v1`             |
+| Health     | `http://localhost:8080/healthz`            |
+| Swagger UI | `http://localhost:8080/swagger/index.html` |
+
+Demo accounts:
+
+- `viewer@uptaris.local`
+- `operator@uptaris.local`
+- `admin@uptaris.local`
+
+Password: `UptarisDemo!2026`.
+
+Seeding skips databases that already contain users and refuses production mode.
+
+## Build and check
+
+From `frontend/`:
+
+```bash
+bun run format
+bun run check
+bun run lint
+bun run build
+```
+
+From `backend/`:
+
+```bash
+gofmt -w .
+go vet ./...
+go build ./...
 go generate ./cmd/api
 ```
 
-## Full verification
-
-See [testing guide](testing.md) for the Swagger API walkthrough and dependency checks. See the wiki for [API endpoints](https://github.com/Linux123123/uptaris/wiki/API-Reference) and the [requirements review](https://github.com/Linux123123/uptaris/wiki/Project-Report).
-
-## Demo accounts
-
-The seed command creates at least five servers, five monitors, and five incidents in an empty database. It refuses production mode and skips a database that already contains users.
-
-| Email | Role | Access |
-| --- | --- | --- |
-| `viewer@uptaris.local` | Viewer | Read owned resources; starts without inventory |
-| `operator@uptaris.local` | Operator | Manage seeded resources |
-| `admin@uptaris.local` | Administrator | Manage all resources and user roles |
-
-Demo password: `uptaris-demo-2026`. Public registration creates viewers. Use the administrator UI to grant operator access.
-
-## Code organization
-
-Custom React components each live in their own file. Small render callbacks for tables and forms stay with their callers. Generated shadcn primitives in `src/components/ui` retain their original structure. Shared field validation, options, and cache updates live in `src/lib`; API routes live in `backend/routers`, HTTP handling in `backend/internal/handlers`, and database operations in `backend/internal/inventory`, `auth`, and `users`.
-
-Backend dependencies are constructed in `backend/cmd/api/main.go`. Route files register paths and middleware only. Request decoding and response formatting live in `backend/internal/request` and `response`; business operations accept `context.Context` and return errors. Keep Gin and HTTP responses out of the business packages. PATCH operations reload and lock the current row before applying changes.
-
-Format frontend code with `bun run format` from `frontend`, and Go code with `gofmt` before running checks. Update both wiki languages when changing behavior. Monitoring stays manual; monitor intervals and expected health describe configuration, not scheduled background work.
+The final command regenerates API documentation.

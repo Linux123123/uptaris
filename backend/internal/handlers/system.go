@@ -3,8 +3,8 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/uptaris/uptaris/backend/internal/auth"
+	"github.com/uptaris/uptaris/backend/internal/inventory"
 	"github.com/uptaris/uptaris/backend/internal/middleware"
-	"github.com/uptaris/uptaris/backend/internal/models"
 	"github.com/uptaris/uptaris/backend/internal/request"
 	"github.com/uptaris/uptaris/backend/internal/response"
 )
@@ -24,6 +24,7 @@ func (h *Handlers) Dashboard(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	h.summary(c, &identity)
 }
 
@@ -59,32 +60,38 @@ func (h *Handlers) AllIncidents(c *gin.Context) {
 	if !ok {
 		return
 	}
+
 	page, size, ok := request.Page(c)
 	if !ok {
 		return
 	}
+
 	status, ok := request.Filter(c, "status", "open", "acknowledged", "resolved")
 	if !ok {
 		return
 	}
+
 	severity, ok := request.Filter(c, "severity", "low", "medium", "high", "critical")
 	if !ok {
 		return
 	}
-	rows, total, err := models.ListIncidentOverview(c.Request.Context(), h.db, ownerScope(&identity), models.Page{Number: page, Size: size}, models.Filters{Status: status, Severity: severity})
+
+	rows, total, err := inventory.ListIncidentOverview(c.Request.Context(), h.db, ownerScope(&identity), page, size, status, severity)
 	if err != nil {
 		response.Error(c, err)
 		return
 	}
+
 	response.List(c, rows, total, page, size)
 }
 
 func (h *Handlers) summary(c *gin.Context, identity *auth.Identity) {
-	result, err := models.AggregateSummary(c.Request.Context(), h.db, ownerScope(identity))
+	result, err := inventory.AggregateSummary(c.Request.Context(), h.db, ownerScope(identity))
 	if err != nil {
 		response.Error(c, err)
 		return
 	}
+
 	c.JSON(200, result)
 }
 
@@ -93,6 +100,7 @@ func (h *Handlers) Health(c *gin.Context) {
 		c.JSON(503, gin.H{"status": "unavailable"})
 		return
 	}
+
 	c.JSON(200, gin.H{"status": "ok"})
 }
 
@@ -106,5 +114,6 @@ func ownerScope(identity *auth.Identity) *uint {
 	if identity == nil || identity.Role == "admin" {
 		return nil
 	}
+
 	return &identity.ID
 }

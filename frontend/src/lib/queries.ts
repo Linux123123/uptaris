@@ -67,6 +67,7 @@ export const usersQuery = (filters: { page: number; pageSize: number }) =>
 
 export const dashboardQuery = () =>
   queryOptions({ queryKey: ["dashboard"], queryFn: ({ signal }) => systemApi.dashboard(signal) });
+
 export const incidentOverviewQuery = (filters: {
   page: number;
   pageSize: number;
