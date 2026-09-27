@@ -49,7 +49,7 @@ func (p *Provider) Exchange(ctx context.Context, code string) (auth.OAuthIdentit
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, p.client)
 	token, err := p.config.Exchange(ctx, code)
 	if err != nil || token.AccessToken == "" {
-		return auth.OAuthIdentity{}, fmt.Errorf("Google token request failed")
+		return auth.OAuthIdentity{}, fmt.Errorf("google token request failed")
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://openidconnect.googleapis.com/v1/userinfo", nil)
@@ -60,7 +60,7 @@ func (p *Provider) Exchange(ctx context.Context, code string) (auth.OAuthIdentit
 	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
 	response, err := p.client.Do(req)
 	if err != nil {
-		return auth.OAuthIdentity{}, fmt.Errorf("Google identity lookup failed")
+		return auth.OAuthIdentity{}, fmt.Errorf("google identity lookup failed")
 	}
 
 	defer response.Body.Close()
@@ -72,7 +72,7 @@ func (p *Provider) Exchange(ctx context.Context, code string) (auth.OAuthIdentit
 	}
 
 	if response.StatusCode != http.StatusOK || json.NewDecoder(io.LimitReader(response.Body, 1<<20)).Decode(&user) != nil || user.Subject == "" {
-		return auth.OAuthIdentity{}, fmt.Errorf("Google identity lookup failed")
+		return auth.OAuthIdentity{}, fmt.Errorf("google identity lookup failed")
 	}
 
 	return auth.OAuthIdentity{
