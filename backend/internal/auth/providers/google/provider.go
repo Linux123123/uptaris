@@ -40,14 +40,18 @@ func (p *Provider) ID() string { return "google" }
 
 func (p *Provider) DisplayName() string { return "Google" }
 
-func (p *Provider) AuthorizationURL(state string) string {
+func (p *Provider) AuthorizationURL(state, verifier string) string {
 	// Request refresh access without forcing consent or account selection on every sign-in.
-	return p.config.AuthCodeURL(state, oauth2.AccessTypeOffline)
+	return p.config.AuthCodeURL(
+		state,
+		oauth2.AccessTypeOffline,
+		oauth2.S256ChallengeOption(verifier),
+	)
 }
 
-func (p *Provider) Exchange(ctx context.Context, code string) (auth.OAuthIdentity, error) {
+func (p *Provider) Exchange(ctx context.Context, code, verifier string) (auth.OAuthIdentity, error) {
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, p.client)
-	token, err := p.config.Exchange(ctx, code)
+	token, err := p.config.Exchange(ctx, code, oauth2.VerifierOption(verifier))
 	if err != nil || token.AccessToken == "" {
 		return auth.OAuthIdentity{}, fmt.Errorf("google token request failed")
 	}

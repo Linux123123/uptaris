@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/uptaris/uptaris/backend/internal/database"
 	"github.com/uptaris/uptaris/backend/internal/models"
+	"golang.org/x/oauth2"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -33,8 +34,8 @@ type OAuthTokenSet struct {
 type OAuthProvider interface {
 	ID() string
 	DisplayName() string
-	AuthorizationURL(state string) string
-	Exchange(ctx context.Context, code string) (OAuthIdentity, error)
+	AuthorizationURL(state, verifier string) string
+	Exchange(ctx context.Context, code, verifier string) (OAuthIdentity, error)
 }
 
 type OAuthProviderInfo struct {
@@ -86,6 +87,13 @@ func (s *Service) StartOAuth(ctx context.Context, providerID, intent string, use
 		return "", "", err
 	}
 
+	// Keep the verifier server-side and bind its ciphertext to this pending authorization.
+	verifier := oauth2.GenerateVerifier()
+	verifierCiphertext, err := s.encryptOAuthToken(providerID, state, "pkce", verifier)
+	if err != nil {
+		return "", "", err
+	}
+
 	if err := s.db.WithContext(ctx).
 		Unscoped().
 		Where("expires_at <= ? OR consumed_at IS NOT NULL", time.Now()).
@@ -94,18 +102,19 @@ func (s *Service) StartOAuth(ctx context.Context, providerID, intent string, use
 	}
 
 	row := models.OAuthState{
-		StateHash: oauthStateDigest(state),
-		Provider:  providerID,
-		Intent:    intent,
-		UserID:    linked,
-		ExpiresAt: time.Now().Add(10 * time.Minute),
+		PKCEVerifierCiphertext: verifierCiphertext,
+		StateHash:              oauthStateDigest(state),
+		Provider:               providerID,
+		Intent:                 intent,
+		UserID:                 linked,
+		ExpiresAt:              time.Now().Add(10 * time.Minute),
 	}
 
 	if err := s.db.WithContext(ctx).Create(&row).Error; err != nil {
 		return "", "", err
 	}
 
-	return provider.AuthorizationURL(state), state, nil
+	return provider.AuthorizationURL(state, verifier), state, nil
 }
 
 func (s *Service) CompleteOAuth(ctx context.Context, providerID, state, code string) (*Session, error) {
@@ -120,7 +129,12 @@ func (s *Service) CompleteOAuth(ctx context.Context, providerID, state, code str
 		return nil, failure("oauth_auth_failed", "OAuth sign-in failed")
 	}
 
-	identity, err := provider.Exchange(ctx, code)
+	verifier, err := s.decryptOAuthToken(providerID, state, "pkce", pending.PKCEVerifierCiphertext)
+	if err != nil || verifier == "" {
+		return nil, failure("invalid_oauth_state", "OAuth request invalid; sign in again")
+	}
+
+	identity, err := provider.Exchange(ctx, code, verifier)
 	if err != nil || identity.Subject == "" || identity.Tokens.AccessToken == "" {
 		return nil, failure("oauth_auth_failed", "OAuth provider could not authenticate account")
 	}
@@ -280,7 +294,11 @@ func (s *Service) consumeOAuthState(ctx context.Context, providerID, state strin
 			return err
 		}
 
-		return tx.Model(&pending).Update("consumed_at", time.Now()).Error
+		// Consumption also discards the stored verifier; the caller retains it only for this exchange.
+		return tx.Model(&models.OAuthState{}).Where("id = ?", pending.ID).Updates(map[string]any{
+			"consumed_at":              time.Now(),
+			"pkce_verifier_ciphertext": nil,
+		}).Error
 	})
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return models.OAuthState{}, failure("invalid_oauth_state", "OAuth request expired or already used")
