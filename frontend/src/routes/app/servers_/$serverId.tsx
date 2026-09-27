@@ -1,9 +1,4 @@
-import { DeleteResourceDialog } from "@/components/delete-resource-dialog";
-import { SelectFilter } from "@/components/select-filter";
-import { resourceStatusOptions, monitorTypeOptions } from "@/lib/resource-options";
-import { invalidateInventory } from "@/lib/invalidate-inventory";
-import { DetailCard } from "@/components/detail-card";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, stripSearchParams } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowLeft, Clock3, ExternalLink, MonitorIcon, Trash2 } from "lucide-react";
@@ -12,26 +7,33 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/data-table";
-import { MonitorFormDialog } from "@/components/monitor-form-dialog";
-import { PageHeader } from "@/components/page-header";
+import { DeleteResourceDialog } from "@/components/delete-resource-dialog";
+import { DetailCard } from "@/components/detail-card";
 import { ErrorState } from "@/components/error-state";
 import { LoadingState } from "@/components/loading-state";
+import { MonitorFormDialog } from "@/components/monitor-form-dialog";
+import { PageHeader } from "@/components/page-header";
+import { SelectFilter } from "@/components/select-filter";
 import { ServerFormDialog } from "@/components/server-form-dialog";
 import { StatusBadge } from "@/components/status-badge";
 import { authStore } from "@/lib/auth-store";
-import { monitorsQuery, serverQuery } from "@/lib/queries";
 import { monitorsApi, serversApi, type Monitor } from "@/lib/api";
+import { invalidateInventory } from "@/lib/invalidate-inventory";
+import { monitorsQuery, serverQuery } from "@/lib/queries";
+import { paginationDefaults } from "@/lib/pagination";
+import { monitorTypeOptions, resourceStatusOptions } from "@/lib/resource-options";
 
 export const Route = createFileRoute("/app/servers_/$serverId")({
   params: {
     parse: (params) => ({ serverId: z.string().regex(/^\d+$/).parse(params.serverId) }),
   },
   validateSearch: z.object({
-    page: z.coerce.number().int().positive().catch(1),
-    pageSize: z.coerce.number().int().min(1).max(100).catch(20),
+    page: z.coerce.number().int().positive().catch(paginationDefaults.page),
+    pageSize: z.coerce.number().int().min(1).max(100).catch(paginationDefaults.pageSize),
     status: z.enum(["up", "down", "paused"]).optional().catch(undefined),
     type: z.enum(["http", "tcp", "icmp"]).optional().catch(undefined),
   }),
+  search: { middlewares: [stripSearchParams(paginationDefaults)] },
   loaderDeps: ({ search }) => search,
   loader: async ({ context, params, deps }) => {
     await Promise.all([
@@ -81,9 +83,9 @@ function ServerDetailPage() {
         <div>
           <Link
             className="font-medium hover:underline"
-            to="/app/monitors/$monitorId"
-            params={{ monitorId: row.original.id }}
-            search={{ serverId, page: 1, pageSize: 20 }}
+            to="/app/servers/$serverId/monitors/$monitorId"
+            params={{ serverId, monitorId: row.original.id }}
+            search={{ page: 1, pageSize: 20 }}
           >
             {row.original.name}
           </Link>
@@ -124,9 +126,9 @@ function ServerDetailPage() {
             nativeButton={false}
             render={
               <Link
-                to="/app/monitors/$monitorId"
-                params={{ monitorId: row.original.id }}
-                search={{ serverId, page: 1, pageSize: 20 }}
+                to="/app/servers/$serverId/monitors/$monitorId"
+                params={{ serverId, monitorId: row.original.id }}
+                search={{ page: 1, pageSize: 20 }}
                 aria-label={`Open ${row.original.name}`}
               />
             }
@@ -202,29 +204,29 @@ function ServerDetailPage() {
       </div>
       <Card>
         <CardHeader className="border-b">
-          <div className="flex items-center justify-between gap-4">
-            <CardTitle className="flex items-center gap-2">
-              <MonitorIcon className="size-4" />
-              Monitors
-            </CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <CardTitle className="flex items-center gap-2">
+                <MonitorIcon className="size-4" />
+                Monitors
+              </CardTitle>
+              <SelectFilter
+                label="All statuses"
+                value={search.status}
+                options={resourceStatusOptions}
+                onChange={(status) => void navigate({ search: { ...search, page: 1, status } })}
+              />
+              <SelectFilter
+                label="All types"
+                value={search.type}
+                options={monitorTypeOptions}
+                onChange={(type) => void navigate({ search: { ...search, page: 1, type } })}
+              />
+            </div>
             {canEdit && <MonitorFormDialog serverId={serverId} />}
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="flex flex-wrap gap-2 p-4">
-            <SelectFilter
-              label="All statuses"
-              value={search.status}
-              options={resourceStatusOptions}
-              onChange={(status) => void navigate({ search: { ...search, page: 1, status } })}
-            />
-            <SelectFilter
-              label="All types"
-              value={search.type}
-              options={monitorTypeOptions}
-              onChange={(type) => void navigate({ search: { ...search, page: 1, type } })}
-            />
-          </div>
           {monitors.isPending ? (
             <LoadingState />
           ) : monitors.isError ? (
@@ -234,8 +236,12 @@ function ServerDetailPage() {
               columns={columns}
               data={monitors.data.data}
               page={search.page}
+              pageSize={search.pageSize}
               totalPages={monitors.data.pagination.totalPages}
               onPageChange={(page) => void navigate({ search: { ...search, page } })}
+              onPageSizeChange={(pageSize) =>
+                void navigate({ search: { ...search, page: 1, pageSize } })
+              }
               emptyTitle="No monitors configured"
               emptyDescription="Add first HTTP, TCP, or ICMP monitor."
             />

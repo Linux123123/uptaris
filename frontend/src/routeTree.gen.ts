@@ -17,8 +17,8 @@ import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as AppIncidentsRouteImport } from './routes/app/incidents'
 import { Route as AppServersRouteImport } from './routes/app/servers'
 import { Route as AppAdminUsersRouteImport } from './routes/app/admin/users'
-import { Route as AppMonitorsMonitorIdRouteImport } from './routes/app/monitors/$monitorId'
-import { Route as AppServersServerIdRouteImport } from './routes/app/servers_.$serverId'
+import { Route as AppServersServerIdRouteImport } from './routes/app/servers_/$serverId'
+import { Route as AppServersServerIdMonitorsMonitorIdRouteImport } from './routes/app/servers_/$serverId_/monitors/$monitorId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -60,16 +60,17 @@ const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => AppRoute,
 } as any)
-const AppMonitorsMonitorIdRoute = AppMonitorsMonitorIdRouteImport.update({
-  id: '/monitors/$monitorId',
-  path: '/monitors/$monitorId',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppServersServerIdRoute = AppServersServerIdRouteImport.update({
   id: '/servers_/$serverId',
   path: '/servers/$serverId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppServersServerIdMonitorsMonitorIdRoute =
+  AppServersServerIdMonitorsMonitorIdRouteImport.update({
+    id: '/servers_/$serverId_/monitors/$monitorId',
+    path: '/servers/$serverId/monitors/$monitorId',
+    getParentRoute: () => AppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -80,8 +81,8 @@ export interface FileRoutesByFullPath {
   '/app/incidents': typeof AppIncidentsRoute
   '/app/servers': typeof AppServersRoute
   '/app/admin/users': typeof AppAdminUsersRoute
-  '/app/monitors/$monitorId': typeof AppMonitorsMonitorIdRoute
   '/app/servers/$serverId': typeof AppServersServerIdRoute
+  '/app/servers/$serverId/monitors/$monitorId': typeof AppServersServerIdMonitorsMonitorIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -92,8 +93,8 @@ export interface FileRoutesByTo {
   '/app/incidents': typeof AppIncidentsRoute
   '/app/servers': typeof AppServersRoute
   '/app/admin/users': typeof AppAdminUsersRoute
-  '/app/monitors/$monitorId': typeof AppMonitorsMonitorIdRoute
   '/app/servers/$serverId': typeof AppServersServerIdRoute
+  '/app/servers/$serverId/monitors/$monitorId': typeof AppServersServerIdMonitorsMonitorIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -105,8 +106,8 @@ export interface FileRoutesById {
   '/app/incidents': typeof AppIncidentsRoute
   '/app/servers': typeof AppServersRoute
   '/app/admin/users': typeof AppAdminUsersRoute
-  '/app/monitors/$monitorId': typeof AppMonitorsMonitorIdRoute
   '/app/servers_/$serverId': typeof AppServersServerIdRoute
+  '/app/servers_/$serverId_/monitors/$monitorId': typeof AppServersServerIdMonitorsMonitorIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -119,8 +120,8 @@ export interface FileRouteTypes {
     | '/app/incidents'
     | '/app/servers'
     | '/app/admin/users'
-    | '/app/monitors/$monitorId'
     | '/app/servers/$serverId'
+    | '/app/servers/$serverId/monitors/$monitorId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -131,8 +132,8 @@ export interface FileRouteTypes {
     | '/app/incidents'
     | '/app/servers'
     | '/app/admin/users'
-    | '/app/monitors/$monitorId'
     | '/app/servers/$serverId'
+    | '/app/servers/$serverId/monitors/$monitorId'
   id:
     | '__root__'
     | '/'
@@ -143,8 +144,8 @@ export interface FileRouteTypes {
     | '/app/incidents'
     | '/app/servers'
     | '/app/admin/users'
-    | '/app/monitors/$monitorId'
     | '/app/servers_/$serverId'
+    | '/app/servers_/$serverId_/monitors/$monitorId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -212,18 +213,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminUsersRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/monitors/$monitorId': {
-      id: '/app/monitors/$monitorId'
-      path: '/monitors/$monitorId'
-      fullPath: '/app/monitors/$monitorId'
-      preLoaderRoute: typeof AppMonitorsMonitorIdRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/app/servers_/$serverId': {
       id: '/app/servers_/$serverId'
       path: '/servers/$serverId'
       fullPath: '/app/servers/$serverId'
       preLoaderRoute: typeof AppServersServerIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/servers_/$serverId_/monitors/$monitorId': {
+      id: '/app/servers_/$serverId_/monitors/$monitorId'
+      path: '/servers/$serverId/monitors/$monitorId'
+      fullPath: '/app/servers/$serverId/monitors/$monitorId'
+      preLoaderRoute: typeof AppServersServerIdMonitorsMonitorIdRouteImport
       parentRoute: typeof AppRoute
     }
   }
@@ -234,8 +235,8 @@ interface AppRouteChildren {
   AppIncidentsRoute: typeof AppIncidentsRoute
   AppServersRoute: typeof AppServersRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
-  AppMonitorsMonitorIdRoute: typeof AppMonitorsMonitorIdRoute
   AppServersServerIdRoute: typeof AppServersServerIdRoute
+  AppServersServerIdMonitorsMonitorIdRoute: typeof AppServersServerIdMonitorsMonitorIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -243,8 +244,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppIncidentsRoute: AppIncidentsRoute,
   AppServersRoute: AppServersRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
-  AppMonitorsMonitorIdRoute: AppMonitorsMonitorIdRoute,
   AppServersServerIdRoute: AppServersServerIdRoute,
+  AppServersServerIdMonitorsMonitorIdRoute:
+    AppServersServerIdMonitorsMonitorIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

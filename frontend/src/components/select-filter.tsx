@@ -21,6 +21,7 @@ export function SelectFilter<Value extends string>({
 }: SelectFilterProps<Value>) {
   return (
     <Select
+      items={[{ value: "all", label }, ...options]}
       value={value ?? "all"}
       onValueChange={(selected) => {
         if (selected !== null) onChange(selected === "all" ? undefined : (selected as Value));

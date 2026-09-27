@@ -1,5 +1,5 @@
 import { FilterButton } from "@/components/filter-button";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, stripSearchParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronRight } from "lucide-react";
@@ -13,15 +13,17 @@ import { ServerFormDialog } from "@/components/server-form-dialog";
 import { StatusBadge } from "@/components/status-badge";
 import { authStore } from "@/lib/auth-store";
 import { serversQuery } from "@/lib/queries";
+import { paginationDefaults } from "@/lib/pagination";
 import type { Server, ServerStatus } from "@/lib/api";
 
 const searchSchema = z.object({
-  page: z.coerce.number().int().positive().catch(1),
-  pageSize: z.coerce.number().int().min(10).max(100).catch(20),
+  page: z.coerce.number().int().positive().catch(paginationDefaults.page),
+  pageSize: z.coerce.number().int().min(10).max(100).catch(paginationDefaults.pageSize),
   status: z.enum(["up", "down", "paused"]).optional().catch(undefined),
 });
 export const Route = createFileRoute("/app/servers")({
   validateSearch: searchSchema,
+  search: { middlewares: [stripSearchParams(paginationDefaults)] },
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) => context.queryClient.ensureQueryData(serversQuery(deps)),
   component: ServersPage,
@@ -106,8 +108,12 @@ function ServersPage() {
               columns={columns}
               data={query.data.data}
               page={query.data.pagination.page}
+              pageSize={search.pageSize}
               totalPages={query.data.pagination.totalPages}
               onPageChange={(page) => void navigate({ search: { ...search, page } })}
+              onPageSizeChange={(pageSize) =>
+                void navigate({ search: { ...search, page: 1, pageSize } })
+              }
               emptyTitle="No servers found"
               emptyDescription="Add first server or change current status filter."
             />

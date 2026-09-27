@@ -1,6 +1,13 @@
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -10,20 +17,26 @@ import {
 } from "@/components/ui/table";
 import { EmptyState } from "@/components/empty-state";
 
+const pageSizeOptions = [10, 20, 50, 100];
+
 export function DataTable<T>({
   columns,
   data,
   page,
+  pageSize,
   totalPages,
   onPageChange,
+  onPageSizeChange,
   emptyTitle = "No records",
   emptyDescription = "No data matches current filters.",
 }: {
   columns: ColumnDef<T>[];
   data: T[];
   page?: number;
+  pageSize?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
   emptyTitle?: string;
   emptyDescription?: string;
 }) {
@@ -33,6 +46,9 @@ export function DataTable<T>({
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
   });
+  const availablePageSizes = pageSize
+    ? Array.from(new Set([...pageSizeOptions, pageSize])).sort((a, b) => a - b)
+    : pageSizeOptions;
 
   return (
     <div>
@@ -67,11 +83,33 @@ export function DataTable<T>({
         </Table>
       )}
       {page !== undefined && totalPages !== undefined && onPageChange && (
-        <div className="flex items-center justify-between border-t px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3">
           <p className="text-sm text-muted-foreground">
             Page {page} of {Math.max(totalPages, 1)}
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-3">
+            {pageSize !== undefined && onPageSizeChange && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Rows per page</span>
+                <Select
+                  value={String(pageSize)}
+                  onValueChange={(value) => {
+                    if (value !== null) onPageSizeChange(Number(value));
+                  }}
+                >
+                  <SelectTrigger aria-label="Rows per page" size="sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent align="end">
+                    {availablePageSizes.map((size) => (
+                      <SelectItem key={size} value={String(size)}>
+                        {size}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <Button
               variant="outline"
               size="sm"

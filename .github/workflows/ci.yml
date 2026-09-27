@@ -18,13 +18,14 @@ jobs:
           bun-version: 1.3.11
       - run: bun install --frozen-lockfile
         working-directory: frontend
+      - run: bun run build
+        working-directory: frontend
+      - run: git diff --exit-code -- frontend/src/routeTree.gen.ts
       - run: bun run check
         working-directory: frontend
       - run: bun run lint
         working-directory: frontend
       - run: bun audit
-        working-directory: frontend
-      - run: bun run build
         working-directory: frontend
 
   backend:

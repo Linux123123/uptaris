@@ -35,7 +35,7 @@ The command creates a database session with the requested lifetime and uses the 
 
 ## Frontend checks
 
-From `frontend`, run `bun run check`, `bun run lint`, `bun run format:check`, and `bun run build`. Browser checks are manual: review desktop/mobile navigation, form validation, create/edit/delete dialogs, filter changes, pagination, loading/errors, and session restoration. Check each role with the demo accounts.
+From `frontend`, run `bun run build`, `bun run check`, `bun run lint`, and `bun run format:check`. Browser checks are manual: review desktop/mobile navigation, form validation, create/edit/delete dialogs, filter changes, pagination, loading/errors, and session restoration. Check each role with the demo accounts.
 
 ## Manual API walkthrough
 

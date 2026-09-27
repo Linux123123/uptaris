@@ -1,5 +1,5 @@
 import { DeleteResourceDialog } from "@/components/delete-resource-dialog";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, stripSearchParams } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Trash2 } from "lucide-react";
@@ -22,13 +22,22 @@ import {
 import { adminApi, type Role, type User } from "@/lib/api";
 import { authStore } from "@/lib/auth-store";
 import { usersQuery } from "@/lib/queries";
+import { paginationDefaults } from "@/lib/pagination";
 
 const searchSchema = z.object({
-  page: z.coerce.number().int().positive().catch(1),
-  pageSize: z.coerce.number().int().min(10).max(100).catch(20),
+  page: z.coerce.number().int().positive().catch(paginationDefaults.page),
+  pageSize: z.coerce.number().int().min(10).max(100).catch(paginationDefaults.pageSize),
 });
+
+const roleOptions = [
+  { value: "viewer", label: "Viewer" },
+  { value: "operator", label: "Operator" },
+  { value: "admin", label: "Admin" },
+] as const;
+
 export const Route = createFileRoute("/app/admin/users")({
   validateSearch: searchSchema,
+  search: { middlewares: [stripSearchParams(paginationDefaults)] },
   beforeLoad: ({ context }) => {
     if (context.auth.user?.role !== "admin") throw redirect({ to: "/app/dashboard" });
   },
@@ -80,6 +89,7 @@ function UsersPage() {
           </Badge>
         ) : (
           <Select
+            items={roleOptions}
             value={row.original.role}
             disabled={updateRole.isPending}
             onValueChange={(role) =>
@@ -93,9 +103,11 @@ function UsersPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="viewer">Viewer</SelectItem>
-              <SelectItem value="operator">Operator</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
+              {roleOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         ),
@@ -149,8 +161,12 @@ function UsersPage() {
               columns={columns}
               data={query.data.data}
               page={query.data.pagination.page}
+              pageSize={search.pageSize}
               totalPages={query.data.pagination.totalPages}
               onPageChange={(page) => void navigate({ search: { ...search, page } })}
+              onPageSizeChange={(pageSize) =>
+                void navigate({ search: { ...search, page: 1, pageSize } })
+              }
               emptyTitle="No users"
               emptyDescription="No active user accounts found."
             />

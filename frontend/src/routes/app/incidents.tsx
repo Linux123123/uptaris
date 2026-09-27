@@ -1,5 +1,5 @@
 import { FilterButton } from "@/components/filter-button";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, stripSearchParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { z } from "zod";
@@ -10,17 +10,19 @@ import { ErrorState } from "@/components/error-state";
 import { LoadingState } from "@/components/loading-state";
 import { StatusBadge } from "@/components/status-badge";
 import { incidentOverviewQuery } from "@/lib/queries";
+import { paginationDefaults } from "@/lib/pagination";
 import type { IncidentRow, IncidentSeverity, IncidentStatus } from "@/lib/api";
 
 const searchSchema = z.object({
-  page: z.coerce.number().int().positive().catch(1),
-  pageSize: z.coerce.number().int().min(1).max(100).catch(20),
+  page: z.coerce.number().int().positive().catch(paginationDefaults.page),
+  pageSize: z.coerce.number().int().min(1).max(100).catch(paginationDefaults.pageSize),
   status: z.enum(["open", "acknowledged", "resolved"]).optional().catch(undefined),
   severity: z.enum(["low", "medium", "high", "critical"]).optional().catch(undefined),
 });
 
 export const Route = createFileRoute("/app/incidents")({
   validateSearch: searchSchema,
+  search: { middlewares: [stripSearchParams(paginationDefaults)] },
   component: IncidentsPage,
 });
 
@@ -50,9 +52,9 @@ function IncidentsPage() {
       cell: ({ row }) => (
         <Link
           className="hover:underline"
-          to="/app/monitors/$monitorId"
-          params={{ monitorId: row.original.monitorId }}
-          search={{ serverId: row.original.serverId, page: 1, pageSize: 20 }}
+          to="/app/servers/$serverId/monitors/$monitorId"
+          params={{ serverId: row.original.serverId, monitorId: row.original.monitorId }}
+          search={{ page: 1, pageSize: 20 }}
         >
           {row.original.monitorName}
         </Link>
@@ -124,8 +126,12 @@ function IncidentsPage() {
               columns={columns}
               data={rows}
               page={search.page}
+              pageSize={search.pageSize}
               totalPages={query.data?.pagination.totalPages ?? 0}
               onPageChange={(page) => void navigate({ search: { ...search, page } })}
+              onPageSizeChange={(pageSize) =>
+                void navigate({ search: { ...search, page: 1, pageSize } })
+              }
               emptyTitle="No incidents found"
               emptyDescription="No incidents match current scope and filters."
             />

@@ -48,6 +48,7 @@ Open `http://localhost:5173`.
 
 ```bash
 cd frontend
+bun run build
 bun run check
 bun run lint
 bun run format:check

@@ -25,6 +25,7 @@ export function FormSelectField({
       errors={field.state.meta.errors}
     >
       <Select
+        items={options}
         value={field.state.value}
         onValueChange={(value) => value && field.handleChange(value)}
       >

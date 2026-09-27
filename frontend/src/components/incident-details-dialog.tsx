@@ -49,8 +49,8 @@ export function IncidentDetailsDialog({
           <ErrorState message={query.error.message} />
         ) : (
           <div className="space-y-4">
-            <h3 className="font-semibold break-words">{query.data.data.title}</h3>
-            <p className="whitespace-pre-wrap break-words">
+            <h3 className="font-semibold wrap-break-word">{query.data.data.title}</h3>
+            <p className="whitespace-pre-wrap wrap-break-word">
               {query.data.data.description || "No description"}
             </p>
             <p>

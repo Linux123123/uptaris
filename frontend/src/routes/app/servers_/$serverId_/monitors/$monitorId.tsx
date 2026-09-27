@@ -1,9 +1,4 @@
-import { DeleteResourceDialog } from "@/components/delete-resource-dialog";
-import { SelectFilter } from "@/components/select-filter";
-import { incidentStatusOptions, incidentSeverityOptions } from "@/lib/resource-options";
-import { invalidateInventory } from "@/lib/invalidate-inventory";
-import { DetailCard } from "@/components/detail-card";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, stripSearchParams } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowLeft, ShieldAlert, Trash2 } from "lucide-react";
@@ -12,48 +7,58 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/data-table";
+import { DeleteResourceDialog } from "@/components/delete-resource-dialog";
+import { DetailCard } from "@/components/detail-card";
+import { ErrorState } from "@/components/error-state";
 import { IncidentDetailsDialog } from "@/components/incident-details-dialog";
 import { IncidentFormDialog } from "@/components/incident-form-dialog";
+import { LoadingState } from "@/components/loading-state";
 import { MonitorFormDialog } from "@/components/monitor-form-dialog";
 import { PageHeader } from "@/components/page-header";
-import { ErrorState } from "@/components/error-state";
-import { LoadingState } from "@/components/loading-state";
+import { SelectFilter } from "@/components/select-filter";
 import { StatusBadge } from "@/components/status-badge";
-import { authStore } from "@/lib/auth-store";
 import { incidentsApi, type Incident } from "@/lib/api";
+import { authStore } from "@/lib/auth-store";
+import { invalidateInventory } from "@/lib/invalidate-inventory";
 import { incidentsQuery, monitorQuery } from "@/lib/queries";
+import { paginationDefaults } from "@/lib/pagination";
+import { incidentSeverityOptions, incidentStatusOptions } from "@/lib/resource-options";
 
-export const Route = createFileRoute("/app/monitors/$monitorId")({
+const incidentSearchSchema = z.object({
+  page: z.coerce.number().int().positive().catch(paginationDefaults.page),
+  pageSize: z.coerce.number().int().min(1).max(100).catch(paginationDefaults.pageSize),
+  status: z.enum(["open", "acknowledged", "resolved"]).optional().catch(undefined),
+  severity: z.enum(["low", "medium", "high", "critical"]).optional().catch(undefined),
+});
+
+export const Route = createFileRoute("/app/servers_/$serverId_/monitors/$monitorId")({
   params: {
-    parse: (params) => ({ monitorId: z.string().regex(/^\d+$/).parse(params.monitorId) }),
+    parse: (params) => ({
+      serverId: z.string().regex(/^\d+$/).parse(params.serverId),
+      monitorId: z.string().regex(/^\d+$/).parse(params.monitorId),
+    }),
   },
-  validateSearch: z.object({
-    serverId: z.string().regex(/^\d+$/),
-    page: z.coerce.number().int().positive().catch(1),
-    pageSize: z.coerce.number().int().min(1).max(100).catch(20),
-    status: z.enum(["open", "acknowledged", "resolved"]).optional().catch(undefined),
-    severity: z.enum(["low", "medium", "high", "critical"]).optional().catch(undefined),
-  }),
+  validateSearch: incidentSearchSchema,
+  search: { middlewares: [stripSearchParams(paginationDefaults)] },
   loaderDeps: ({ search }) => search,
   loader: async ({ context, params, deps }) => {
     await Promise.all([
-      context.queryClient.ensureQueryData(monitorQuery(deps.serverId, params.monitorId)),
-      context.queryClient.ensureQueryData(incidentsQuery(deps.serverId, params.monitorId, deps)),
+      context.queryClient.ensureQueryData(monitorQuery(params.serverId, params.monitorId)),
+      context.queryClient.ensureQueryData(incidentsQuery(params.serverId, params.monitorId, deps)),
     ]);
   },
   component: MonitorDetailPage,
 });
 
 function MonitorDetailPage() {
-  const { monitorId } = Route.useParams();
+  const { serverId, monitorId } = Route.useParams();
   const search = Route.useSearch();
-  const { serverId } = search;
   const navigate = Route.useNavigate();
   const queryClient = useQueryClient();
   const monitor = useQuery(monitorQuery(serverId, monitorId));
   const incidents = useQuery(incidentsQuery(serverId, monitorId, search));
   const canEdit = authStore.state.user?.role !== "viewer";
-  const remove = useMutation({
+  const removeIncident = useMutation({
     onError: (error) => toast.error(error.message),
     mutationFn: (id: string) => incidentsApi.remove(serverId, monitorId, id),
     onSuccess: async () => {
@@ -114,7 +119,7 @@ function MonitorDetailPage() {
             title={<>Delete incident?</>}
             description={<>This removes the incident from active history.</>}
             actionLabel="Delete incident"
-            onConfirm={() => remove.mutateAsync(row.original.id)}
+            onConfirm={() => removeIncident.mutateAsync(row.original.id)}
           />
         ) : null,
     },
@@ -153,11 +158,25 @@ function MonitorDetailPage() {
       </div>
       <Card>
         <CardHeader className="border-b">
-          <div className="flex items-center justify-between gap-4">
-            <CardTitle className="flex items-center gap-2">
-              <ShieldAlert className="size-4" />
-              Incidents
-            </CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <CardTitle className="flex items-center gap-2">
+                <ShieldAlert className="size-4" />
+                Incidents
+              </CardTitle>
+              <SelectFilter
+                label="All statuses"
+                value={search.status}
+                options={incidentStatusOptions}
+                onChange={(status) => void navigate({ search: { ...search, page: 1, status } })}
+              />
+              <SelectFilter
+                label="All severities"
+                value={search.severity}
+                options={incidentSeverityOptions}
+                onChange={(severity) => void navigate({ search: { ...search, page: 1, severity } })}
+              />
+            </div>
             {canEdit && <IncidentFormDialog serverId={serverId} monitorId={monitorId} />}
           </div>
         </CardHeader>
@@ -167,33 +186,19 @@ function MonitorDetailPage() {
           ) : incidents.isError ? (
             <ErrorState message={incidents.error.message} retry={() => void incidents.refetch()} />
           ) : (
-            <>
-              <div className="flex flex-wrap gap-2 p-4">
-                <SelectFilter
-                  label="All statuses"
-                  value={search.status}
-                  options={incidentStatusOptions}
-                  onChange={(status) => void navigate({ search: { ...search, page: 1, status } })}
-                />
-                <SelectFilter
-                  label="All severities"
-                  value={search.severity}
-                  options={incidentSeverityOptions}
-                  onChange={(severity) =>
-                    void navigate({ search: { ...search, page: 1, severity } })
-                  }
-                />
-              </div>
-              <DataTable
-                columns={columns}
-                data={incidents.data.data}
-                page={search.page}
-                totalPages={incidents.data.pagination.totalPages}
-                onPageChange={(page) => void navigate({ search: { ...search, page } })}
-                emptyTitle="No incidents"
-                emptyDescription="This monitor has no recorded incidents."
-              />
-            </>
+            <DataTable
+              columns={columns}
+              data={incidents.data.data}
+              page={search.page}
+              pageSize={search.pageSize}
+              totalPages={incidents.data.pagination.totalPages}
+              onPageChange={(page) => void navigate({ search: { ...search, page } })}
+              onPageSizeChange={(pageSize) =>
+                void navigate({ search: { ...search, page: 1, pageSize } })
+              }
+              emptyTitle="No incidents"
+              emptyDescription="This monitor has no recorded incidents."
+            />
           )}
         </CardContent>
       </Card>
