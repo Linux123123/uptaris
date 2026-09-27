@@ -47,6 +47,8 @@ export function SecondFactorInput({
       maxLength={6}
       pattern={REGEXP_ONLY_DIGITS}
       autoComplete="one-time-code"
+      inputMode="numeric"
+      pushPasswordManagerStrategy="none"
       containerClassName={large ? "w-full justify-center" : undefined}
       required
     >
